@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Redefinir Senha - ServiçosPro{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5 text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4"
+                         style="width: 80px; height: 80px;">
+                        <i class="bi bi-key text-primary fs-2"></i>
+                    </div>
+                    
+                    <h2 class="fw-bold mb-3">Redefinir Senha</h2>
+                    <p class="text-muted mb-4">
+                        Digite seu email cadastrado e enviaremos instruções para redefinir sua senha.
+                    </p>
+
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label for="email" class="form-label fw-semibold text-start w-100">
+                                <i class="bi bi-envelope me-2"></i>Email
+                            </label>
+                            <input type="email" 
+                                   class="form-control form-control-lg" 
+                                   id="email" 
+                                   name="email" 
+                                   required
+                                   placeholder="seu@email.com">
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg py-2">
+                                <i class="bi bi-send me-2"></i>Enviar Instruções
+                            </button>
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary py-2">
+                                <i class="bi bi-arrow-left me-2"></i>Voltar para o Login
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <p class="text-muted small">
+                    Lembrou sua senha? 
+                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none">Faça login aqui</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

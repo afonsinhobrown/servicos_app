@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block title %}Login - ServiçosPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    
+    .login-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .form-control {
+        border-radius: 12px;
+        padding: 14px 16px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-google {
+        background: #fff;
+        border: 2px solid #ddd;
+        color: #333;
+        border-radius: 12px;
+        padding: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-google:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+    }
+
+    .min-vh-75 {
+        min-height: 75vh;
+    }
+
+    .password-toggle {
+        cursor: pointer;
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    .password-container {
+        position: relative;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center align-items-center min-vh-75">
+        <div class="col-lg-10">
+            <div class="card login-card">
+                <div class="row g-0">
+                    <!-- Lado Esquerdo - Formulário -->
+                    <div class="col-lg-6">
+                        <div class="card-body p-4 p-md-5">
+                            <div class="text-center mb-4">
+                                <a href="{{ url_for('main.index') }}" class="d-inline-block mb-4">
+                                    <i class="bi bi-handshake fs-1 text-primary"></i>
+                                </a>
+                                <h1 class="h2 fw-bold text-dark mb-2">Bem-vindo de Volta</h1>
+                                <p class="text-muted">Entre na sua conta para continuar</p>
+                            </div>
+
+                            <!-- Flash Messages -->
+                            {% with messages = get_flashed_messages(with_categories=true) %}
+                                {% if messages %}
+                                    {% for category, message in messages %}
+                                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                            {{ message }}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endwith %}
+
+                            <form method="POST" novalidate id="loginForm">
+                                <div class="mb-4">
+                                    <label for="email" class="form-label fw-semibold">
+                                        <i class="bi bi-envelope me-2"></i>Email
+                                    </label>
+                                    <input type="email"
+                                           class="form-control"
+                                           id="email"
+                                           name="email"
+                                           value="{{ request.form.email if request.form.email }}"
+                                           required
+                                           placeholder="seu@email.com"
+                                           autocomplete="email">
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label for="senha" class="form-label fw-semibold">
+                                            <i class="bi bi-lock me-2"></i>Senha
+                                        </label>
+                                        <a href="{{ url_for('auth.redefinir_senha') }}" class="text-primary text-decoration-none small fw-semibold">
+                                            Esqueceu a senha?
+                                        </a>
+                                    </div>
+                                    <div class="password-container">
+                                        <input type="password"
+                                               class="form-control"
+                                               id="senha"
+                                               name="senha"
+                                               required
+                                               placeholder="Sua senha"
+                                               autocomplete="current-password">
+                                        <span class="password-toggle" id="togglePassword">
+                                            <i class="bi bi-eye"></i>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                                        <label class="form-check-label" for="remember">
+                                            Lembrar-me
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-semibold mb-4" id="submitBtn">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>Entrar na Conta
+                                </button>
+
+                                <div class="text-center mb-4">
+                                    <span class="text-muted">ou entre com</span>
+                                </div>
+
+                                <!-- Social Login -->
+                                <div class="row g-2 mb-4">
+                                    <div class="col-6">
+                                        <button type="button" class="btn btn-google w-100 py-2" disabled>
+                                            <i class="bi bi-google me-2"></i>Google
+                                        </button>
+                                    </div>
+                                    <div class="col-6">
+                                        <button type="button" class="btn btn-dark w-100 py-2" disabled>
+                                            <i class="bi bi-github me-2"></i>GitHub
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div class="text-center">
+                                <p class="text-muted mb-0">
+                                    Não tem uma conta?
+                                    <a href="{{ url_for('auth.registro') }}" class="text-primary fw-semibold text-decoration-none">
+                                        Cadastre-se agora
+                                    </a>
+                                </p>
+                            </div>
+
+                            <!-- Demo Accounts -->
+                            <div class="mt-4 p-3 bg-light rounded">
+                                <h6 class="fw-semibold mb-2">Contas de Demonstração:</h6>
+                                <div class="row small text-muted">
+                                    <div class="col-6">
+                                        <strong>Admin:</strong><br>
+                                        admin@servicospro.mz<br>
+                                        admin123
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Cliente:</strong><br>
+                                        cliente@exemplo.com<br>
+                                        123456
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lado Direito - Banner -->
+                    <div class="col-lg-6 d-none d-lg-block">
+                        <div class="login-gradient h-100 text-white p-5 d-flex align-items-center justify-content-center">
+                            <div class="text-center">
+                                <div class="bg-white bg-opacity-10 rounded-3 p-4 mb-4">
+                                    <i class="bi bi-briefcase display-1 text-warning"></i>
+                                </div>
+                                <h3 class="fw-bold mb-3">Junte-se à Comunidade</h3>
+                                <p class="mb-4">
+                                    Conecte-se com os melhores profissionais de Moçambique e transforme a maneira como você contrata serviços.
+                                </p>
+                                <div class="row text-center mb-3">
+                                    <div class="col-4">
+                                        <h4 class="fw-bold text-warning">500+</h4>
+                                        <small>Profissionais</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <h4 class="fw-bold text-warning">1K+</h4>
+                                        <small>Clientes</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <h4 class="fw-bold text-warning">4.8</h4>
+                                        <small>Avaliação</small>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-center gap-3 text-warning fs-5">
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-fill"></i>
+                                    <i class="bi bi-star-half"></i>
+                                </div>
+                                <small class="text-white-50">4.8/5 - Avaliação dos usuários</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle para mostrar/ocultar senha
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('senha');
+    const icon = togglePassword.querySelector('i');
+
+    togglePassword.addEventListener('click', function() {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+
+        // Alternar ícone
+        if (type === 'password') {
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        } else {
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        }
+    });
+
+    // Validação do formulário
+    const loginForm = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    loginForm.addEventListener('submit', function(e) {
+        const email = document.getElementById('email').value.trim();
+        const senha = document.getElementById('senha').value.trim();
+
+        // Validação básica
+        if (!email || !senha) {
+            e.preventDefault();
+            showAlert('Por favor, preencha todos os campos.', 'danger');
+            return;
+        }
+
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            e.preventDefault();
+            showAlert('Por favor, insira um email válido.', 'danger');
+            return;
+        }
+
+        // Mostrar loading
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-arrow-repeat spinner-border spinner-border-sm me-2"></i>Entrando...';
+    });
+
+    // Auto-focus no email
+    document.getElementById('email').focus();
+
+    // Efeitos de hover nos botões sociais
+    const socialButtons = document.querySelectorAll('.btn-google, .btn-dark');
+    socialButtons.forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            if (!this.disabled) {
+                this.style.transform = 'translateY(-2px)';
+            }
+        });
+
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+
+        // Mostrar tooltip para botões desativados
+        if (this.disabled) {
+            this.setAttribute('title', 'Funcionalidade em desenvolvimento');
+        }
+    });
+
+    function showAlert(message, type) {
+        // Remover alerts existentes
+        const existingAlerts = document.querySelectorAll('.alert');
+        existingAlerts.forEach(alert => alert.remove());
+
+        // Criar novo alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        // Inserir após o título
+        const title = document.querySelector('.text-center.mb-4');
+        title.parentNode.insertBefore(alertDiv, title.nextSibling);
+
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+
+    // Preencher automaticamente para demo
+    function preencherDemo(usuario, senha) {
+        document.getElementById('email').value = usuario;
+        document.getElementById('senha').value = senha;
+    }
+
+    // Adicionar eventos para os botões de demo (opcional)
+    const demoAccounts = document.querySelectorAll('.demo-account');
+    demoAccounts.forEach(account => {
+        account.addEventListener('click', function() {
+            const usuario = this.getAttribute('data-usuario');
+            const senha = this.getAttribute('data-senha');
+            preencherDemo(usuario, senha);
+        });
+    });
+});
+</script>
+{% endblock %}

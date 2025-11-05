@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Avaliações - ServiçosPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rating-stars {
+        color: #ffc107;
+    }
+    .avaliacao-card {
+        border-left: 4px solid #28a745;
+        transition: transform 0.2s;
+    }
+    .avaliacao-card:hover {
+        transform: translateY(-2px);
+    }
+    .progress {
+        height: 8px;
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 fw-bold">
+                    <i class="bi bi-star me-2"></i>Minhas Avaliações
+                </h1>
+                <span class="badge bg-primary fs-6">{{ avaliacoes|length }} avaliação{{ 'ões' if avaliacoes|length != 1 else '' }}</span>
+            </div>
+
+            <!-- Estatísticas para Prestadores -->
+            {% if current_user.tipo == 'prestador' and estatisticas %}
+            <div class="row mb-5">
+                <div class="col-md-3">
+                    <div class="card stat-card border-0">
+                        <div class="card-body text-center py-4">
+                            <div class="display-4 fw-bold mb-2">{{ estatisticas.media_rating }}</div>
+                            <div class="rating-stars mb-2">
+                                {% for i in range(5) %}
+                                    <i class="bi bi-star{{ '-fill' if i < estatisticas.media_rating|round else '' }}"></i>
+                                {% endfor %}
+                            </div>
+                            <small>Avaliação Média</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center py-4">
+                            <div class="display-4 fw-bold text-primary mb-2">{{ estatisticas.total_avaliacoes }}</div>
+                            <small class="text-muted">Total de Avaliações</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3">Distribuição de Avaliações</h6>
+                            {% for stars in range(5, 0, -1) %}
+                            <div class="row align-items-center mb-2">
+                                <div class="col-2">
+                                    <small class="text-muted">{{ stars }} <i class="bi bi-star-fill text-warning"></i></small>
+                                </div>
+                                <div class="col-8">
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" 
+                                             style="width: {{ (estatisticas.distribuicao[stars] / estatisticas.total_avaliacoes * 100) if estatisticas.total_avaliacoes > 0 else 0 }}%">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-2 text-end">
+                                    <small class="text-muted">{{ estatisticas.distribuicao[stars] }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Lista de Avaliações -->
+            {% if avaliacoes %}
+            <div class="row">
+                {% for avaliacao in avaliacoes %}
+                <div class="col-12 mb-4">
+                    <div class="card avaliacao-card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Cabeçalho da Avaliação -->
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-start mb-3">
+                                        <div class="me-3">
+                                            {% if tipo == 'feitas' %}
+                                            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" 
+                                                 style="width: 60px; height: 60px;">
+                                                <i class="bi bi-person-check text-primary fs-4"></i>
+                                            </div>
+                                            {% else %}
+                                            <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" 
+                                                 style="width: 60px; height: 60px;">
+                                                <i class="bi bi-person text-success fs-4"></i>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <h5 class="fw-bold mb-1">
+                                                {% if tipo == 'feitas' %}
+                                                    {{ avaliacao.prestador.usuario.nome }}
+                                                {% else %}
+                                                    {{ 'Cliente Anônimo' if avaliacao.anonima else avaliacao.cliente.nome }}
+                                                {% endif %}
+                                            </h5>
+                                            <div class="rating-stars mb-2">
+                                                {% for i in range(5) %}
+                                                    <i class="bi bi-star{{ '-fill' if i < avaliacao.rating else '' }}"></i>
+                                                {% endfor %}
+                                                <span class="ms-2 text-muted">{{ avaliacao.data_avaliacao.strftime('%d/%m/%Y') }}</span>
+                                            </div>
+                                            {% if avaliacao.agendamento.servico %}
+                                            <p class="text-muted mb-0">
+                                                <i class="bi bi-briefcase me-1"></i>
+                                                {{ avaliacao.agendamento.servico.titulo }}
+                                            </p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Comentário do Cliente -->
+                                    {% if avaliacao.comentario %}
+                                    <div class="bg-light p-3 rounded mb-3">
+                                        <p class="mb-0">{{ avaliacao.comentario }}</p>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Resposta do Prestador -->
+                                    {% if avaliacao.resposta_prestador %}
+                                    <div class="border-start border-3 border-success ps-3 ms-2">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <strong class="text-success">Resposta do Prestador</strong>
+                                            <small class="text-muted ms-2">{{ avaliacao.data_resposta.strftime('%d/%m/%Y') }}</small>
+                                        </div>
+                                        <p class="text-muted mb-0">{{ avaliacao.resposta_prestador }}</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Ações -->
+                                <div class="col-md-4">
+                                    <div class="d-flex flex-column h-100">
+                                        {% if tipo == 'recebidas' and not avaliacao.resposta_prestador %}
+                                        <button class="btn btn-outline-primary mb-2" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#responderModal{{ avaliacao.id }}">
+                                            <i class="bi bi-reply me-2"></i>Responder
+                                        </button>
+                                        {% endif %}
+                                        
+                                        <a href="{{ url_for('agendamentos.detalhes', agendamento_id=avaliacao.agendamento_id) }}" 
+                                           class="btn btn-outline-secondary mt-auto">
+                                            <i class="bi bi-eye me-2"></i>Ver Agendamento
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal de Resposta -->
+                    {% if tipo == 'recebidas' and not avaliacao.resposta_prestador %}
+                    <div class="modal fade" id="responderModal{{ avaliacao.id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Responder Avaliação</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form method="POST" action="{{ url_for('avaliacoes.responder_avaliacao', avaliacao_id=avaliacao.id) }}">
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Sua Resposta</label>
+                                            <textarea class="form-control" name="resposta" rows="4" 
+                                                      placeholder="Agradeça pelo feedback ou responda aos comentários..." 
+                                                      required></textarea>
+                                        </div>
+                                        <div class="form-text">
+                                            Sua resposta será visível publicamente.
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary">Enviar Resposta</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-star display-1 text-muted mb-3"></i>
+                <h4 class="text-muted mb-3">
+                    {% if tipo == 'feitas' %}
+                        Nenhuma avaliação feita
+                    {% else %}
+                        Nenhuma avaliação recebida
+                    {% endif %}
+                </h4>
+                <p class="text-muted mb-4">
+                    {% if tipo == 'feitas' %}
+                        Suas avaliações de serviços aparecerão aqui.
+                    {% else %}
+                        Avaliações dos clientes aparecerão aqui.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                    <i class="bi bi-house me-2"></i>Voltar ao Dashboard
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

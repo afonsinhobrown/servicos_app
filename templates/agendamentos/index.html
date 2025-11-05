@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Agendamentos - ServiçosPro{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="fw-bold mb-0">
+                            <i class="bi bi-calendar-week me-2"></i>Meus Agendamentos
+                        </h4>
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('servicos.buscar') }}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Novo Agendamento
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Filtros -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="btn-group" role="group">
+                                <a href="?status=todos" 
+                                   class="btn btn-outline-primary {% if request.args.get('status', 'todos') == 'todos' %}active{% endif %}">
+                                    Todos
+                                </a>
+                                <a href="?status=pendente" 
+                                   class="btn btn-outline-warning {% if request.args.get('status') == 'pendente' %}active{% endif %}">
+                                    Pendentes
+                                </a>
+                                <a href="?status=confirmado" 
+                                   class="btn btn-outline-success {% if request.args.get('status') == 'confirmado' %}active{% endif %}">
+                                    Confirmados
+                                </a>
+                                <a href="?status=realizado" 
+                                   class="btn btn-outline-info {% if request.args.get('status') == 'realizado' %}active{% endif %}">
+                                    Realizados
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" placeholder="Buscar agendamentos..." id="searchInput">
+                        </div>
+                    </div>
+
+                    {% if agendamentos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="agendamentosTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Serviço</th>
+                                    <th>{{ 'Cliente' if current_user.tipo == 'prestador' else 'Prestador' }}</th>
+                                    <th>Data/Hora</th>
+                                    <th>Status</th>
+                                    <th>Valor</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for agendamento in agendamentos %}
+                                <tr>
+                                    <td>
+                                        <div>
+                                            <strong class="d-block">{{ agendamento.servico.titulo }}</strong>
+                                            <small class="text-muted">{{ agendamento.servico.descricao[:50] }}...</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong class="d-block">
+                                                {% if current_user.tipo == 'cliente' %}
+                                                {{ agendamento.prestador.usuario.nome }}
+                                                {% else %}
+                                                {{ agendamento.cliente.nome }}
+                                                {% endif %}
+                                            </strong>
+                                            <small class="text-muted">
+                                                {% if current_user.tipo == 'cliente' %}
+                                                {{ agendamento.prestador.especialidade }}
+                                                {% else %}
+                                                {{ agendamento.cliente.email }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong class="d-block">{{ agendamento.data_agendamento.strftime('%d/%m/%Y') }}</strong>
+                                            <small class="text-muted">{{ agendamento.data_agendamento.strftime('%H:%M') }}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if agendamento.status == 'confirmado' %}bg-success
+                                            {% elif agendamento.status == 'pendente' %}bg-warning
+                                            {% elif agendamento.status == 'realizado' %}bg-primary
+                                            {% elif agendamento.status == 'cancelado' %}bg-danger
+                                            {% elif agendamento.status == 'em_andamento' %}bg-info
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ agendamento.status.title() }}
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="bi bi-{% if agendamento.modalidade == 'online' %}laptop{% else %}geo-alt{% endif %} me-1"></i>
+                                            {{ agendamento.modalidade.title() if agendamento.modalidade else 'Presencial' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">MZN {{ "%.2f"|format(agendamento.servico.preco) }}</strong>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('agendamentos.detalhes', agendamento_id=agendamento.id) }}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if agendamento.conversa %}
+                                            <a href="{{ url_for('chat.conversa', agendamento_id=agendamento.id) }}" 
+                                               class="btn btn-outline-success">
+                                                <i class="bi bi-chat"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginação -->
+                    <nav aria-label="Paginação de agendamentos">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#">Anterior</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Próxima</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum agendamento encontrado</h5>
+                        <p class="text-muted mb-4">
+                            {% if current_user.tipo == 'cliente' %}
+                            Você ainda não possui agendamentos. Que tal explorar nossos serviços?
+                            {% else %}
+                            Você ainda não recebeu agendamentos. Seus agendamentos aparecerão aqui.
+                            {% endif %}
+                        </p>
+                        <a href="{{ url_for('servicos.buscar') }}" class="btn btn-primary">
+                            <i class="bi bi-search me-2"></i>Buscar Serviços
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtro de busca
+    const searchInput = document.getElementById('searchInput');
+    const table = document.getElementById('agendamentosTable');
+    
+    if (searchInput && table) {
+        searchInput.addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            
+            for (let row of rows) {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

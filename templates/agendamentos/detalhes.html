@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+
+{% block title %}Agendamento #{{ agendamento.id }} - ServiçosPro{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="fw-bold mb-0">
+                            <i class="bi bi-calendar-event me-2"></i>Agendamento #{{ agendamento.id }}
+                        </h4>
+                        <div>
+                            <span class="badge bg-{% if agendamento.status == 'confirmado' %}success
+                                                  {% elif agendamento.status == 'pendente' %}warning
+                                                  {% elif agendamento.status == 'realizado' %}primary
+                                                  {% elif agendamento.status == 'cancelado' %}danger
+                                                  {% else %}secondary{% endif %} fs-6">
+                                {{ agendamento.status.title() }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Informações Principais -->
+                        <div class="col-lg-8">
+                            <div class="row g-4">
+                                <!-- Serviço -->
+                                <div class="col-md-6">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold text-primary mb-3">
+                                                <i class="bi bi-briefcase me-2"></i>Serviço
+                                            </h6>
+                                            <h5 class="fw-bold">{{ agendamento.servico.titulo }}</h5>
+                                            <p class="text-muted mb-2">{{ agendamento.servico.descricao }}</p>
+                                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                                <span class="badge bg-primary">{{ agendamento.servico.nivel.title() }}</span>
+                                                <span class="badge bg-secondary">{{ agendamento.servico.duracao }}min</span>
+                                            </div>
+                                            <h4 class="text-success fw-bold">
+                                                MZN {{ "%.2f"|format(agendamento.servico.preco) }}
+                                            </h4>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Data e Horário -->
+                                <div class="col-md-6">
+                                    <div class="card border-0 bg-light h-100">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold text-primary mb-3">
+                                                <i class="bi bi-clock me-2"></i>Data & Horário
+                                            </h6>
+                                            <div class="text-center">
+                                                <div class="display-6 fw-bold text-dark mb-2">
+                                                    {{ agendamento.data_agendamento.strftime('%d') }}
+                                                </div>
+                                                <div class="h5 fw-bold text-dark mb-1">
+                                                    {{ agendamento.data_agendamento.strftime('%B') }}
+                                                </div>
+                                                <div class="text-muted mb-3">
+                                                    {{ agendamento.data_agendamento.strftime('%Y') }}
+                                                </div>
+                                                <div class="h4 fw-bold text-primary">
+                                                    {{ agendamento.data_agendamento.strftime('%H:%M') }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Participantes -->
+                                <div class="col-12">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold text-primary mb-3">
+                                                <i class="bi bi-people me-2"></i>Participantes
+                                            </h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                                             style="width: 50px; height: 50px;">
+                                                            <i class="bi bi-person-fill text-primary"></i>
+                                                        </div>
+                                                        <div>
+                                                            <strong class="d-block">Cliente</strong>
+                                                            <span class="text-muted">{{ agendamento.cliente.nome }}</span>
+                                                            <br>
+                                                            <small class="text-muted">{{ agendamento.cliente.email }}</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="d-flex align-items-center mb-3">
+                                                        <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                                             style="width: 50px; height: 50px;">
+                                                            <i class="bi bi-person-badge text-success"></i>
+                                                        </div>
+                                                        <div>
+                                                            <strong class="d-block">Prestador</strong>
+                                                            <span class="text-muted">{{ agendamento.prestador.usuario.nome }}</span>
+                                                            <br>
+                                                            <small class="text-muted">{{ agendamento.prestador.especialidade }}</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Detalhes Adicionais -->
+                                <div class="col-12">
+                                    <div class="card border-0 bg-light">
+                                        <div class="card-body">
+                                            <h6 class="fw-bold text-primary mb-3">
+                                                <i class="bi bi-info-circle me-2"></i>Detalhes
+                                            </h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <strong>Modalidade:</strong>
+                                                    <span class="badge bg-light text-dark border ms-2">
+                                                        <i class="bi bi-{% if agendamento.modalidade == 'online' %}laptop{% else %}geo-alt{% endif %} me-1"></i>
+                                                        {{ agendamento.modalidade.title() if agendamento.modalidade else 'Presencial' }}
+                                                    </span>
+                                                </div>
+                                                {% if agendamento.endereco_servico %}
+                                                <div class="col-md-6">
+                                                    <strong>Endereço:</strong>
+                                                    <span class="text-muted ms-2">{{ agendamento.endereco_servico }}</span>
+                                                </div>
+                                                {% endif %}
+                                                {% if agendamento.observacoes %}
+                                                <div class="col-12 mt-3">
+                                                    <strong>Observações:</strong>
+                                                    <p class="text-muted mt-1">{{ agendamento.observacoes }}</p>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ações e Status -->
+                        <div class="col-lg-4">
+                            <div class="sticky-top" style="top: 20px;">
+                                <!-- Ações -->
+                                <div class="card border-0 shadow-sm mb-4">
+                                    <div class="card-header bg-white border-0">
+                                        <h6 class="fw-bold mb-0">
+                                            <i class="bi bi-lightning me-2"></i>Ações
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-grid gap-2">
+                                            <!-- Chat -->
+                                            {% if agendamento.conversa %}
+                                            <a href="{{ url_for('chat.conversa', agendamento_id=agendamento.id) }}" 
+                                               class="btn btn-outline-primary text-start">
+                                                <i class="bi bi-chat me-2"></i>Conversar
+                                            </a>
+                                            {% endif %}
+
+                                            <!-- Ações do Cliente -->
+                                            {% if current_user.tipo == 'cliente' %}
+                                                {% if agendamento.status == 'pendente' %}
+                                                <form method="POST" action="{{ url_for('agendamentos.cancelar', agendamento_id=agendamento.id) }}">
+                                                    <button type="submit" class="btn btn-outline-danger w-100 text-start">
+                                                        <i class="bi bi-x-circle me-2"></i>Cancelar
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                                
+                                                <!-- Pagamento -->
+                                                {% if agendamento.status in ['pendente', 'confirmado'] %}
+                                                <a href="{{ url_for('pagamentos.pagamento_agendamento', agendamento_id=agendamento.id) }}" 
+                                                   class="btn btn-success text-start">
+                                                    <i class="bi bi-credit-card me-2"></i>Pagar
+                                                </a>
+                                                {% endif %}
+                                            {% endif %}
+
+                                            <!-- Ações do Prestador -->
+                                            {% if current_user.tipo == 'prestador' %}
+                                                {% if agendamento.status == 'pendente' %}
+                                                <form method="POST" action="{{ url_for('agendamentos.confirmar', agendamento_id=agendamento.id) }}">
+                                                    <button type="submit" class="btn btn-success w-100 text-start">
+                                                        <i class="bi bi-check-circle me-2"></i>Confirmar
+                                                    </button>
+                                                </form>
+                                                <button type="button" class="btn btn-outline-danger w-100 text-start" 
+                                                        data-bs-toggle="modal" data-bs-target="#recusarModal">
+                                                    <i class="bi bi-x-circle me-2"></i>Recusar
+                                                </button>
+                                                {% elif agendamento.status == 'confirmado' %}
+                                                <form method="POST" action="{{ url_for('agendamentos.concluir', agendamento_id=agendamento.id) }}">
+                                                    <button type="submit" class="btn btn-primary w-100 text-start">
+                                                        <i class="bi bi-check-all me-2"></i>Marcar como Concluído
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            {% endif %}
+
+                                            <!-- Voltar -->
+                                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary text-start">
+                                                <i class="bi bi-arrow-left me-2"></i>Voltar ao Dashboard
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Timeline do Agendamento -->
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-header bg-white border-0">
+                                        <h6 class="fw-bold mb-0">
+                                            <i class="bi bi-clock-history me-2"></i>Histórico
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="timeline">
+                                            <div class="timeline-item {% if agendamento.criado_em %}active{% endif %}">
+                                                <div class="timeline-point"></div>
+                                                <div class="timeline-content">
+                                                    <small class="text-muted">Criado em</small>
+                                                    <div>{{ agendamento.criado_em.strftime('%d/%m/%Y %H:%M') }}</div>
+                                                </div>
+                                            </div>
+                                            {% if agendamento.atualizado_em and agendamento.atualizado_em != agendamento.criado_em %}
+                                            <div class="timeline-item active">
+                                                <div class="timeline-point"></div>
+                                                <div class="timeline-content">
+                                                    <small class="text-muted">Atualizado em</small>
+                                                    <div>{{ agendamento.atualizado_em.strftime('%d/%m/%Y %H:%M') }}</div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Recusar Agendamento -->
+{% if current_user.tipo == 'prestador' and agendamento.status == 'pendente' %}
+<div class="modal fade" id="recusarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Recusar Agendamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('agendamentos.recusar', agendamento_id=agendamento.id) }}">
+                <div class="modal-body">
+                    <p>Por favor, informe o motivo da recusa:</p>
+                    <textarea class="form-control" name="motivo" rows="3" 
+                              placeholder="Ex: Horário indisponível, conflito de agenda..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Recusa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 20px;
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 15px;
+    }
+    .timeline-point {
+        position: absolute;
+        left: -20px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #6c757d;
+        border: 2px solid white;
+    }
+    .timeline-item.active .timeline-point {
+        background-color: #007bff;
+    }
+    .timeline-content {
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}

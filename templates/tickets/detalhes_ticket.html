@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket #{{ ticket.id }} - ServiçosPro{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Cabeçalho do Ticket -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="fw-bold mb-1">{{ ticket.assunto }}</h2>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <span class="badge 
+                                    {% if ticket.status == 'aberto' %}bg-warning
+                                    {% elif ticket.status == 'em_andamento' %}bg-info
+                                    {% elif ticket.status == 'respondido' %}bg-primary
+                                    {% elif ticket.status == 'fechado' %}bg-success{% endif %}">
+                                    {{ ticket.status.replace('_', ' ').title() }}
+                                </span>
+                                <span class="badge 
+                                    {% if ticket.prioridade == 'alta' %}bg-danger
+                                    {% elif ticket.prioridade == 'media' %}bg-warning
+                                    {% else %}bg-success{% endif %}">
+                                    {{ ticket.prioridade.title() }}
+                                </span>
+                                <span class="badge bg-secondary">{{ ticket.categoria.title() }}</span>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Aberto em {{ ticket.data_abertura.strftime('%d/%m/%Y às %H:%M') }}
+                                </small>
+                                <small class="text-muted">Ticket #{{ ticket.id }}</small>
+                            </div>
+                        </div>
+                        {% if ticket.status != 'fechado' %}
+                        <form method="POST" action="{{ url_for('tickets.fechar_ticket', ticket_id=ticket.id) }}">
+                            <button type="submit" class="btn btn-outline-success btn-sm"
+                                    onclick="return confirm('Fechar este ticket?')">
+                                <i class="bi bi-check-lg me-1"></i>Fechar Ticket
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+
+                    <!-- Descrição Original -->
+                    <div class="bg-light p-4 rounded mb-4">
+                        <h6 class="fw-bold mb-3">
+                            <i class="bi bi-person me-2"></i>Descrição do Problema
+                        </h6>
+                        <p class="mb-0">{{ ticket.descricao|replace('\n', '<br>')|safe }}</p>
+                    </div>
+
+                    <!-- Resolução (se houver) -->
+                    {% if ticket.resolucao %}
+                    <div class="bg-success bg-opacity-10 p-4 rounded border border-success">
+                        <h6 class="fw-bold text-success mb-3">
+                            <i class="bi bi-check-circle me-2"></i>Resolução
+                        </h6>
+                        <p class="mb-0">{{ ticket.resolucao|replace('\n', '<br>')|safe }}</p>
+                        {% if ticket.data_resolucao %}
+                        <small class="text-muted mt-2 d-block">
+                            Resolvido em {{ ticket.data_resolucao.strftime('%d/%m/%Y às %H:%M') }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Formulário de Resposta (apenas se ticket não estiver fechado) -->
+            {% if ticket.status != 'fechado' %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-reply me-2"></i>Adicionar Resposta
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('tickets.responder_ticket', ticket_id=ticket.id) }}">
+                        <div class="mb-3">
+                            <label for="resposta" class="form-label fw-bold">
+                                Sua Mensagem
+                                {% if current_user.tipo == 'admin' %}
+                                <span class="badge bg-primary ms-2">Resposta da Equipe</span>
+                                {% endif %}
+                            </label>
+                            <textarea class="form-control" id="resposta" name="resposta" rows="6" 
+                                      placeholder="Escreva sua resposta ou atualização sobre o problema..." required></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                {% if current_user.tipo == 'admin' %}
+                                Sua resposta será enviada como resolução oficial do ticket.
+                                {% else %}
+                                Sua resposta atualizará o status do ticket para "Em Andamento".
+                                {% endif %}
+                            </small>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-2"></i>Enviar Resposta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-success">
+                <h6 class="alert-heading">
+                    <i class="bi bi-check-circle me-2"></i>Ticket Fechado
+                </h6>
+                <p class="mb-0">Este ticket foi resolvido e está fechado. Se precisar de mais ajuda, crie um novo ticket.</p>
+            </div>
+            {% endif %}
+
+            <!-- Botão Voltar -->
+            <div class="text-center mt-4">
+                <a href="{{ url_for('tickets.meus_tickets') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Voltar para Meus Tickets
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

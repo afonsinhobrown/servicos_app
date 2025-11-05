@@ -1,0 +1,693 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Prestador{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        transition: transform 0.2s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .service-card {
+        border-left: 4px solid #007bff;
+    }
+    .profile-stats {
+        font-size: 0.9rem;
+    }
+    .quick-actions .btn {
+        font-size: 0.8rem;
+    }
+    .rating-stars {
+        color: #ffc107;
+    }
+    .avaliacao-badge {
+        font-size: 0.75rem;
+    }
+    .ticket-badge {
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row align-items-center mb-5">
+        <div class="col">
+            <h1 class="h2 fw-bold text-dark mb-2">
+                <i class="bi bi-speedometer2 me-3"></i>Dashboard do Prestador
+            </h1>
+            <p class="text-muted mb-0">Bem-vindo, {{ prestador.usuario.nome }}!</p>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <a href="{{ url_for('servicos.buscar') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-search me-2"></i>Ver Mercado
+                </a>
+                <a href="#" class="btn btn-primary" onclick="adicionarServico()">
+                    <i class="bi bi-plus-circle me-2"></i>Novo Serviço
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stats-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-briefcase text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-1">{{ stats.total_servicos or 0 }}</h4>
+                            <p class="text-muted mb-0">Serviços Ativos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stats-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-clock text-warning fs-4"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-1">{{ stats.agendamentos_pendentes or 0 }}</h4>
+                            <p class="text-muted mb-0">Pendentes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stats-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-currency-dollar text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-1">MZN {{ "%.0f"|format(prestador.saldo_disponivel or 0) }}</h4>
+                            <p class="text-muted mb-0">Saldo Disponível</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stats-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-headset text-info fs-4"></i>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-1" id="tickets-abertos-count">0</h4>
+                            <p class="text-muted mb-0">Tickets Abertos</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Coluna Principal -->
+        <div class="col-lg-8">
+            <!-- Meus Serviços -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-briefcase me-2"></i>Meus Serviços
+                    </h5>
+                    <span class="badge bg-primary">{{ servicos|length }} serviços</span>
+                </div>
+                <div class="card-body">
+                    {% if servicos %}
+                    <div class="row g-3">
+                        {% for servico in servicos %}
+                        <div class="col-12">
+                            <div class="card service-card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h6 class="fw-bold mb-1">{{ servico.titulo }}</h6>
+                                            <p class="text-muted mb-2">{{ servico.descricao[:120] }}{% if servico.descricao|length > 120 %}...{% endif %}</p>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <span class="badge bg-primary">{{ servico.nivel.title() }}</span>
+                                                <span class="badge bg-secondary">{{ servico.duracao }}min</span>
+                                                <span class="badge bg-success">MZN {{ "%.2f"|format(servico.preco) }}</span>
+                                                {% if servico.tags %}
+                                                {% for tag in servico.tags %}
+                                                <span class="badge bg-light text-dark border">{{ tag }}</span>
+                                                {% endfor %}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 text-end">
+                                            <div class="btn-group quick-actions">
+                                                <button class="btn btn-outline-primary btn-sm" onclick="editarServico({{ servico.id }})">
+                                                    <i class="bi bi-pencil"></i> Editar
+                                                </button>
+                                                <button class="btn btn-outline-secondary btn-sm" onclick="verEstatisticas({{ servico.id }})">
+                                                    <i class="bi bi-graph-up"></i>
+                                                </button>
+                                                {% if servico.ativo %}
+                                                <button class="btn btn-outline-warning btn-sm" onclick="toggleServico({{ servico.id }}, false)">
+                                                    <i class="bi bi-pause"></i>
+                                                </button>
+                                                {% else %}
+                                                <button class="btn btn-outline-success btn-sm" onclick="toggleServico({{ servico.id }}, true)">
+                                                    <i class="bi bi-play"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-briefcase display-1 text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum serviço cadastrado</h5>
+                        <p class="text-muted mb-4">Comece a oferecer seus serviços agora mesmo</p>
+                        <button class="btn btn-primary" onclick="adicionarServico()">
+                            <i class="bi bi-plus-circle me-2"></i>Adicionar Primeiro Serviço
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Agendamentos Recentes -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-calendar-week me-2"></i>Próximos Agendamentos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if agendamentos %}
+                    <div class="list-group list-group-flush">
+                        {% for agendamento in agendamentos[:5] %}
+                        <div class="list-group-item border-0 py-3">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h6 class="fw-bold mb-1">{{ agendamento.servico.titulo }}</h6>
+                                    <p class="text-muted mb-1">
+                                        <i class="bi bi-person me-1"></i>{{ agendamento.cliente.nome }}
+                                        {% if agendamento.data_agendamento %}
+                                        • <i class="bi bi-clock me-1"></i>{{ agendamento.data_agendamento.strftime('%d/%m %H:%M') }}
+                                        {% endif %}
+                                    </p>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge
+                                            {% if agendamento.status == 'confirmado' %}bg-success
+                                            {% elif agendamento.status == 'pendente' %}bg-warning
+                                            {% elif agendamento.status == 'realizado' %}bg-primary
+                                            {% elif agendamento.status == 'cancelado' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ agendamento.status.title() }}
+                                        </span>
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-{% if agendamento.modalidade == 'online' %}laptop{% else %}geo-alt{% endif %} me-1"></i>
+                                            {{ agendamento.modalidade.title() if agendamento.modalidade else 'Presencial' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <div class="btn-group">
+                                        {% if agendamento.status == 'pendente' %}
+                                        <!-- Form para Confirmar -->
+                                        <form method="POST" action="{{ url_for('agendamentos.confirmar', agendamento_id=agendamento.id) }}"
+                                              class="d-inline">
+                                            <button type="submit" class="btn btn-outline-success btn-sm"
+                                                    onclick="return confirm('Confirmar este agendamento?')" title="Confirmar">
+                                                <i class="bi bi-check"></i>
+                                            </button>
+                                        </form>
+
+                                        <!-- Form para Recusar -->
+                                        <form method="POST" action="{{ url_for('agendamentos.recusar', agendamento_id=agendamento.id) }}"
+                                              class="d-inline">
+                                            <input type="hidden" name="motivo" value="Recusado via dashboard">
+                                            <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                    onclick="return confirm('Recusar este agendamento?')" title="Recusar">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </form>
+                                        {% elif agendamento.status == 'confirmado' %}
+                                        <!-- Form para Concluir -->
+                                        <form method="POST" action="{{ url_for('agendamentos.concluir', agendamento_id=agendamento.id) }}"
+                                              class="d-inline">
+                                            <button type="submit" class="btn btn-outline-info btn-sm"
+                                                    onclick="return confirm('Marcar como concluído?')" title="Concluir">
+                                                <i class="bi bi-check-all"></i>
+                                            </button>
+                                        </form>
+                                        {% endif %}
+
+                                        {% if agendamento.conversa %}
+                                        <a href="{{ url_for('chat.conversa', agendamento_id=agendamento.id) }}"
+                                           class="btn btn-outline-primary btn-sm" title="Chat">
+                                            <i class="bi bi-chat"></i>
+                                        </a>
+                                        {% endif %}
+
+                                        <a href="{{ url_for('agendamentos.detalhes', agendamento_id=agendamento.id) }}"
+                                           class="btn btn-outline-secondary btn-sm" title="Detalhes">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="bi bi-calendar-x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">Nenhum agendamento próximo</p>
+                    </div>
+                    {% endif %}
+
+                    {% if agendamentos and agendamentos|length > 5 %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('agendamentos.agendamentos_prestador') }}" class="btn btn-outline-primary btn-sm">
+                            Ver Todos os Agendamentos
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tickets Recentes -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-headset me-2"></i>Meus Tickets Recentes
+                    </h5>
+                    <a href="{{ url_for('tickets.meus_tickets') }}" class="btn btn-sm btn-outline-primary">
+                        Ver Todos
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="tickets-recentes">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <p class="text-muted mt-2">Carregando tickets...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Informações do Perfil -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-person me-2"></i>Meu Perfil
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                            <i class="bi bi-person-fill text-primary fs-2"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1">{{ prestador.usuario.nome }}</h6>
+                        <p class="text-muted small">{{ prestador.usuario.email }}</p>
+
+                        <!-- Avaliação Média -->
+                        {% if stats.avaliacao_media and stats.avaliacao_media > 0 %}
+                        <div class="mb-2">
+                            <div class="rating-stars">
+                                {% for i in range(5) %}
+                                    <i class="bi bi-star{{ '-fill' if i < stats.avaliacao_media|round else '' }}"></i>
+                                {% endfor %}
+                            </div>
+                            <small class="text-muted">{{ stats.avaliacao_media }} ({{ stats.total_avaliacoes }} avaliações)</small>
+                        </div>
+                        {% endif %}
+
+                        <span class="badge {% if prestador.verificado %}bg-success{% else %}bg-warning{% endif %}">
+                            <i class="bi bi-{% if prestador.verificado %}check-circle{% else %}clock{% endif %} me-1"></i>
+                            {% if prestador.verificado %}Verificado{% else %}Em Verificação{% endif %}
+                        </span>
+                    </div>
+
+                    <div class="profile-stats">
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span><i class="bi bi-award me-2"></i><strong>Categoria:</strong></span>
+                            <span>{{ prestador.categoria.replace('_', ' ').title() if prestador.categoria else 'Não definida' }}</span>
+                        </div>
+
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span><i class="bi bi-gear me-2"></i><strong>Especialidade:</strong></span>
+                            <span>{{ prestador.especialidade or 'Não definida' }}</span>
+                        </div>
+
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span><i class="bi bi-clock me-2"></i><strong>Experiência:</strong></span>
+                            <span>{{ prestador.experiencia or 0 }} anos</span>
+                        </div>
+
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span><i class="bi bi-cash-coin me-2"></i><strong>Valor/Hora:</strong></span>
+                            <span class="text-success fw-bold">MZN {{ "%.2f"|format(prestador.valor_hora or 0) }}</span>
+                        </div>
+
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span><i class="bi bi-graph-up me-2"></i><strong>Taxa Plataforma:</strong></span>
+                            <span class="text-info">{{ prestador.taxa_plataforma or 10 }}%</span>
+                        </div>
+
+                        <div class="mb-3 d-flex justify-content-between">
+                            <span><i class="bi bi-geo-alt me-2"></i><strong>Disponibilidade:</strong></span>
+                            <span>
+                                {% if prestador.disponivel == 'sim' %}
+                                <span class="badge bg-success">Disponível</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Indisponível</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <a href="#" class="btn btn-outline-primary" onclick="editarPerfil()">
+                            <i class="bi bi-pencil me-2"></i>Editar Perfil
+                        </a>
+                        <a href="{{ url_for('avaliacoes.minhas_avaliacoes') }}" class="btn btn-outline-success">
+                            <i class="bi bi-star me-2"></i>Minhas Avaliações
+                        </a>
+                        <a href="{{ url_for('tickets.meus_tickets') }}" class="btn btn-outline-info">
+                            <i class="bi bi-headset me-2"></i>Meus Tickets
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Últimas Avaliações -->
+            {% if ultimas_avaliacoes %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-star me-2"></i>Últimas Avaliações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for avaliacao in ultimas_avaliacoes[:3] %}
+                        <div class="list-group-item border-0 px-0 py-2">
+                            <div class="d-flex align-items-start mb-2">
+                                <div class="rating-stars me-2">
+                                    {% for i in range(5) %}
+                                        <i class="bi bi-star{{ '-fill' if i < avaliacao.rating else '' }}"></i>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted ms-auto">{{ avaliacao.data_avaliacao.strftime('%d/%m') }}</small>
+                            </div>
+                            <p class="mb-1 small">{{ avaliacao.comentario[:80] }}{% if avaliacao.comentario|length > 80 %}...{% endif %}</p>
+                            <small class="text-muted">
+                                <i class="bi bi-person me-1"></i>
+                                {{ 'Cliente Anônimo' if avaliacao.anonima else avaliacao.cliente.nome }}
+                            </small>
+
+                            {% if not avaliacao.resposta_prestador %}
+                            <div class="mt-2">
+                                <button class="btn btn-outline-primary btn-sm"
+                                        onclick="responderAvaliacao({{ avaliacao.id }})">
+                                    <i class="bi bi-reply me-1"></i>Responder
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if ultimas_avaliacoes|length > 3 %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('avaliacoes.minhas_avaliacoes') }}" class="btn btn-outline-primary btn-sm">
+                            Ver Todas as Avaliações
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Ações Rápidas -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-lightning me-2"></i>Ações Rápidas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="#" class="btn btn-outline-primary text-start" onclick="adicionarServico()">
+                            <i class="bi bi-plus-circle me-2"></i>Adicionar Serviço
+                        </a>
+                        <a href="{{ url_for('agendamentos.agendamentos_prestador') }}" class="btn btn-outline-success text-start">
+                            <i class="bi bi-calendar-check me-2"></i>Ver Todos Agendamentos
+                        </a>
+                        <a href="{{ url_for('chat.index') }}" class="btn btn-outline-info text-start">
+                            <i class="bi bi-chat me-2"></i>Mensagens
+                        </a>
+                        <a href="{{ url_for('tickets.meus_tickets') }}" class="btn btn-outline-warning text-start">
+                            <i class="bi bi-headset me-2"></i>Suporte
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Resposta à Avaliação -->
+<div class="modal fade" id="responderAvaliacaoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Responder Avaliação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="responderAvaliacaoForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Sua Resposta</label>
+                        <textarea class="form-control" name="resposta" rows="4"
+                                  placeholder="Agradeça pelo feedback ou responda aos comentários..."
+                                  required></textarea>
+                    </div>
+                    <div class="form-text">
+                        Sua resposta será visível publicamente na avaliação.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Enviar Resposta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let avaliacaoParaResponder = null;
+
+function adicionarServico() {
+    alert('Funcionalidade "Adicionar Serviço" em desenvolvimento');
+    // window.location.href = "/servicos/novo";
+}
+
+function editarServico(servicoId) {
+    alert('Funcionalidade "Editar Serviço" em desenvolvimento');
+    // window.location.href = `/servicos/editar/${servicoId}`;
+}
+
+function toggleServico(servicoId, ativar) {
+    if (confirm(ativar ? 'Ativar este serviço?' : 'Desativar este serviço?')) {
+        alert('Funcionalidade "Toggle Serviço" em desenvolvimento');
+        // fetch(`/servicos/${servicoId}/toggle`, { method: 'POST' })
+        // .then(response => location.reload());
+    }
+}
+
+function verEstatisticas(servicoId) {
+    alert('Funcionalidade "Estatísticas" em desenvolvimento');
+    // window.location.href = `/servicos/${servicoId}/estatisticas`;
+}
+
+function responderAvaliacao(avaliacaoId) {
+    avaliacaoParaResponder = avaliacaoId;
+    const form = document.getElementById('responderAvaliacaoForm');
+    form.action = `/avaliacoes/${avaliacaoId}/responder`;
+
+    const modal = new bootstrap.Modal(document.getElementById('responderAvaliacaoModal'));
+    modal.show();
+}
+
+// Funções de navegação
+function verAgendamentos() {
+    window.location.href = "{{ url_for('agendamentos.agendamentos_prestador') }}";
+}
+
+function verMensagens() {
+    window.location.href = "{{ url_for('chat.index') }}";
+}
+
+function verAvaliacoes() {
+    window.location.href = "{{ url_for('avaliacoes.minhas_avaliacoes') }}";
+}
+
+function editarPerfil() {
+    alert('Funcionalidade "Editar Perfil" em desenvolvimento');
+    // window.location.href = "/prestadores/editar";
+}
+
+// Configurar o formulário de resposta
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('responderAvaliacaoForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('responderAvaliacaoModal')).hide();
+                    alert('Resposta enviada com sucesso!');
+                    location.reload();
+                } else {
+                    alert('Erro ao enviar resposta. Tente novamente.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao enviar resposta. Tente novamente.');
+            });
+        });
+    }
+
+    // Carregar estatísticas de tickets
+    carregarEstatisticasTickets();
+
+    // Carregar tickets recentes
+    carregarTicketsRecentes();
+});
+
+// Carregar estatísticas de tickets
+function carregarEstatisticasTickets() {
+    fetch('/tickets/api/estatisticas')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('tickets-abertos-count').textContent =
+                    data.estatisticas.tickets_abertos + data.estatisticas.tickets_em_andamento;
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar estatísticas de tickets:', error);
+            document.getElementById('tickets-abertos-count').textContent = '0';
+        });
+}
+
+// Carregar tickets recentes
+function carregarTicketsRecentes() {
+    fetch('/tickets/api/recentes')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('tickets-recentes');
+
+            if (data.success && data.tickets && data.tickets.length > 0) {
+                let html = '';
+
+                data.tickets.forEach(ticket => {
+                    html += `
+                    <div class="card border-0 mb-2 ${ticket.status === 'aberto' ? 'bg-warning bg-opacity-10' :
+                        ticket.status === 'em_andamento' ? 'bg-info bg-opacity-10' :
+                        'bg-light'}">
+                        <div class="card-body py-2">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="fw-bold mb-1">${ticket.assunto}</h6>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                                        <span class="badge ticket-badge ${ticket.status === 'aberto' ? 'bg-warning' :
+                                            ticket.status === 'em_andamento' ? 'bg-info' :
+                                            ticket.status === 'respondido' ? 'bg-primary' :
+                                            'bg-success'}">
+                                            ${ticket.status.replace('_', ' ').toUpperCase()}
+                                        </span>
+                                        <span class="badge ticket-badge bg-secondary">${ticket.categoria.toUpperCase()}</span>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock me-1"></i>
+                                            ${new Date(ticket.data_abertura).toLocaleDateString('pt-BR')}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <a href="/tickets/${ticket.id}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye me-1"></i>Ver Detalhes
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-headset display-1 text-muted mb-3"></i>
+                        <h6 class="text-muted">Nenhum ticket encontrado</h6>
+                        <p class="text-muted small mb-3">Você ainda não criou nenhum ticket de suporte</p>
+                        <a href="/tickets/novo" class="btn btn-info btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>Criar Primeiro Ticket
+                        </a>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar tickets recentes:', error);
+            document.getElementById('tickets-recentes').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Erro ao carregar tickets. Tente recarregar a página.
+                </div>
+            `;
+        });
+}
+
+// Atualização automática do dashboard
+setInterval(() => {
+    carregarEstatisticasTickets();
+}, 120000);
+</script>
+{% endblock %}

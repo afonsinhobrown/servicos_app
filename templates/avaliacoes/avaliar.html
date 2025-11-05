@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}Avaliar Serviço - {{ agendamento.servico.titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rating-stars {
+        font-size: 2.5rem;
+        cursor: pointer;
+    }
+    .rating-stars .bi-star {
+        color: #dee2e6;
+        transition: color 0.2s;
+    }
+    .rating-stars .bi-star-fill {
+        color: #ffc107;
+    }
+    .rating-stars:hover .bi-star {
+        color: #ffc107;
+    }
+    .rating-label {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    .service-card {
+        border-left: 4px solid #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-4">
+                    <h2 class="fw-bold mb-0 text-center">
+                        <i class="bi bi-star-fill text-warning me-2"></i>Avaliar Serviço
+                    </h2>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Resumo do Serviço -->
+                    <div class="card service-card border-0 bg-light mb-4">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h4 class="fw-bold mb-2">{{ agendamento.servico.titulo }}</h4>
+                                    <p class="text-muted mb-2">Realizado em {{ agendamento.data_agendamento.strftime('%d/%m/%Y') }}</p>
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                             style="width: 50px; height: 50px;">
+                                            <i class="bi bi-person-check text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block">{{ agendamento.prestador.usuario.nome }}</strong>
+                                            <small class="text-muted">{{ agendamento.prestador.especialidade }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div class="text-success">
+                                        <i class="bi bi-check-circle-fill display-6"></i>
+                                        <div class="fw-bold mt-2">Serviço Concluído</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('avaliacoes.criar_avaliacao', agendamento_id=agendamento.id) }}" id="avaliacaoForm">
+                        <!-- Avaliação por Estrelas -->
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-light border-0">
+                                <h5 class="fw-bold mb-0">
+                                    <i class="bi bi-star me-2"></i>Como foi sua experiência?
+                                </h5>
+                            </div>
+                            <div class="card-body text-center">
+                                <div class="rating-stars mb-3" id="ratingStars">
+                                    {% for i in range(5, 0, -1) %}
+                                    <i class="bi bi-star-fill rating-star" data-rating="{{ i }}" style="display: none;"></i>
+                                    <i class="bi bi-star rating-star" data-rating="{{ i }}"></i>
+                                    {% endfor %}
+                                </div>
+                                <input type="hidden" name="rating" id="ratingValue" required>
+                                <div class="rating-label" id="ratingText">Selecione uma avaliação</div>
+                                <div class="text-muted small mt-2">
+                                    Clique nas estrelas para avaliar de 1 a 5
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comentário -->
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-light border-0">
+                                <h5 class="fw-bold mb-0">
+                                    <i class="bi bi-chat-text me-2"></i>Comentário (Opcional)
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <textarea class="form-control" name="comentario" rows="4" 
+                                          placeholder="Compartilhe sua experiência... O que você achou do serviço? Algum ponto forte ou algo que poderia melhorar?"></textarea>
+                                <div class="form-text">
+                                    Seu comentário ajuda outros clientes e o prestador a melhorar.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configurações -->
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-light border-0">
+                                <h5 class="fw-bold mb-0">
+                                    <i class="bi bi-gear me-2"></i>Configurações
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="anonima" id="anonima">
+                                    <label class="form-check-label" for="anonima">
+                                        Avaliação anônima
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    Se marcado, seu nome não será exibido publicamente.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ações -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('agendamentos.detalhes', agendamento_id=agendamento.id) }}" 
+                               class="btn btn-outline-secondary me-md-2">
+                                <i class="bi bi-arrow-left me-2"></i>Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="bi bi-send me-2"></i>Enviar Avaliação
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ratingStars = document.getElementById('ratingStars');
+    const ratingValue = document.getElementById('ratingValue');
+    const ratingText = document.getElementById('ratingText');
+    const stars = ratingStars.querySelectorAll('.rating-star');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    const ratingLabels = {
+        1: 'Péssimo',
+        2: 'Ruim', 
+        3: 'Regular',
+        4: 'Bom',
+        5: 'Excelente'
+    };
+    
+    let currentRating = 0;
+    
+    // Configurar estrelas
+    stars.forEach(star => {
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            setRating(rating);
+        });
+        
+        star.addEventListener('mouseover', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            highlightStars(rating);
+        });
+    });
+    
+    ratingStars.addEventListener('mouseleave', function() {
+        highlightStars(currentRating);
+    });
+    
+    function setRating(rating) {
+        currentRating = rating;
+        ratingValue.value = rating;
+        ratingText.textContent = ratingLabels[rating];
+        highlightStars(rating);
+        submitBtn.disabled = false;
+    }
+    
+    function highlightStars(rating) {
+        stars.forEach(star => {
+            const starRating = parseInt(star.getAttribute('data-rating'));
+            if (star.classList.contains('bi-star-fill')) {
+                star.style.display = starRating <= rating ? 'inline' : 'none';
+            } else {
+                star.style.display = starRating <= rating ? 'none' : 'inline';
+            }
+        });
+    }
+    
+    // Validação do formulário
+    document.getElementById('avaliacaoForm').addEventListener('submit', function(e) {
+        if (!currentRating) {
+            e.preventDefault();
+            alert('Por favor, selecione uma avaliação de 1 a 5 estrelas.');
+            return;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i> Enviando...';
+    });
+    
+    // Inicializar
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}

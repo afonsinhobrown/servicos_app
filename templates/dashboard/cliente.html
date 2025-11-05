@@ -1,0 +1,787 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Cliente{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        transition: transform 0.2s;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    .badge-status {
+        font-size: 0.75em;
+    }
+    .action-buttons .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .service-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .prestador-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+    .empty-state {
+        padding: 3rem 1rem;
+    }
+    .ticket-badge {
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row align-items-center mb-5">
+        <div class="col">
+            <h1 class="h2 fw-bold text-dark mb-2">
+                <i class="bi bi-speedometer2 me-3"></i>Dashboard do Cliente
+            </h1>
+            <p class="text-muted mb-0">Bem-vindo, {{ user.nome }}!</p>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <a href="{{ url_for('servicos.buscar') }}" class="btn btn-primary">
+                    <i class="bi bi-search me-2"></i>Buscar Serviços
+                </a>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-calendar-week me-2"></i>Ver Todos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stats-card">
+                <div class="card-body p-4 text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-calendar-check text-primary fs-2"></i>
+                    </div>
+                    <h3 class="fw-bold text-primary">{{ agendamentos|length }}</h3>
+                    <p class="text-muted mb-0">Total Agendamentos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stats-card">
+                <div class="card-body p-4 text-center">
+                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-check-circle text-success fs-2"></i>
+                    </div>
+                    <h3 class="fw-bold text-success">
+                        {% set concluidos = [] %}
+                        {% for agendamento in agendamentos %}
+                            {% if agendamento.status == 'realizado' %}
+                                {% set _ = concluidos.append(1) %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ concluidos|length }}
+                    </h3>
+                    <p class="text-muted mb-0">Concluídos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stats-card">
+                <div class="card-body p-4 text-center">
+                    <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-clock text-warning fs-2"></i>
+                    </div>
+                    <h3 class="fw-bold text-warning">
+                        {% set pendentes = [] %}
+                        {% for agendamento in agendamentos %}
+                            {% if agendamento.status == 'pendente' %}
+                                {% set _ = pendentes.append(1) %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ pendentes|length }}
+                    </h3>
+                    <p class="text-muted mb-0">Pendentes</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm stats-card">
+                <div class="card-body p-4 text-center">
+                    <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-headset text-info fs-2"></i>
+                    </div>
+                    <h3 class="fw-bold text-info" id="tickets-abertos-count">0</h3>
+                    <p class="text-muted mb-0">Tickets Abertos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agendamentos Recentes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-clock-history me-2"></i>Meus Agendamentos Recentes
+                    </h5>
+                    <div>
+                        <span class="badge bg-primary">{{ agendamentos|length }} total</span>
+                        {% if agendamentos|length > 5 %}
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-primary ms-2">
+                            Ver Todos
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if agendamentos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Serviço</th>
+                                    <th>Prestador</th>
+                                    <th>Data/Hora</th>
+                                    <th>Status</th>
+                                    <th>Valor</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for agendamento in agendamentos %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if agendamento.servico and agendamento.servico.imagem_url %}
+                                            <img src="{{ agendamento.servico.imagem_url }}"
+                                                 alt="{{ agendamento.servico.titulo }}"
+                                                 class="service-image me-3">
+                                            {% else %}
+                                            <div class="service-image bg-light d-flex align-items-center justify-content-center me-3">
+                                                <i class="bi bi-briefcase text-muted"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <strong class="d-block">
+                                                    {{ agendamento.servico.titulo if agendamento.servico else 'Serviço não encontrado' }}
+                                                </strong>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-{% if agendamento.modalidade == 'online' %}laptop{% else %}geo-alt{% endif %} me-1"></i>
+                                                    {{ agendamento.modalidade.title() if agendamento.modalidade else 'Presencial' }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="prestador-avatar me-2">
+                                                {{ agendamento.prestador.usuario.nome[0].upper() if agendamento.prestador and agendamento.prestador.usuario else '?' }}
+                                            </div>
+                                            <div>
+                                                <strong class="d-block">
+                                                    {{ agendamento.prestador.usuario.nome if agendamento.prestador and agendamento.prestador.usuario else 'Prestador não encontrado' }}
+                                                </strong>
+                                                <small class="text-muted">
+                                                    {{ agendamento.prestador.especialidade if agendamento.prestador else '' }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            {% if agendamento.data_agendamento %}
+                                            <strong class="d-block">{{ agendamento.data_agendamento.strftime('%d/%m/%Y') }}</strong>
+                                            <small class="text-muted">{{ agendamento.data_agendamento.strftime('%H:%M') }}</small>
+                                            {% else %}
+                                            <span class="text-muted">Não definida</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-status
+                                            {% if agendamento.status == 'confirmado' %}bg-success
+                                            {% elif agendamento.status == 'pendente' %}bg-warning
+                                            {% elif agendamento.status == 'realizado' %}bg-primary
+                                            {% elif agendamento.status == 'cancelado' %}bg-danger
+                                            {% elif agendamento.status == 'em_andamento' %}bg-info
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ agendamento.status.replace('_', ' ').title() if agendamento.status else 'Desconhecido' }}
+                                        </span>
+                                        {% if agendamento.data_agendamento and agendamento.data_agendamento < now %}
+                                        <br>
+                                        <small class="text-danger">
+                                            <i class="bi bi-exclamation-triangle"></i> Passado
+                                        </small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">
+                                            MZN {{ "%.2f"|format(agendamento.servico.preco) if agendamento.servico and agendamento.servico.preco else '0.00' }}
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="{{ url_for('agendamentos.detalhes', agendamento_id=agendamento.id) }}"
+                                               class="btn btn-outline-primary btn-sm mb-1"
+                                               title="Ver detalhes">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+
+                                            {% if agendamento.status == 'pendente' %}
+                                            <button class="btn btn-outline-danger btn-sm mb-1"
+                                                    onclick="cancelarAgendamento({{ agendamento.id }})"
+                                                    title="Cancelar agendamento">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                            {% endif %}
+
+                                            {% if agendamento.conversa %}
+                                            <a href="{{ url_for('chat.conversa', agendamento_id=agendamento.id) }}"
+                                               class="btn btn-outline-success btn-sm mb-1"
+                                               title="Abrir chat">
+                                                <i class="bi bi-chat"></i>
+                                            </a>
+                                            {% else %}
+                                            <button class="btn btn-outline-secondary btn-sm mb-1"
+                                                    onclick="iniciarConversa({{ agendamento.id }})"
+                                                    title="Iniciar conversa">
+                                                <i class="bi bi-chat-left"></i>
+                                            </button>
+                                            {% endif %}
+
+                                            {% if agendamento.status == 'realizado' and not agendamento.avaliacao_id %}
+                                            <button class="btn btn-outline-warning btn-sm mb-1"
+                                                    onclick="avaliarServico({{ agendamento.id }})"
+                                                    title="Avaliar serviço">
+                                                <i class="bi bi-star"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="empty-state text-center py-5">
+                        <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum agendamento encontrado</h5>
+                        <p class="text-muted mb-4">Comece a explorar e agendar serviços agora mesmo</p>
+                        <a href="{{ url_for('servicos.buscar') }}" class="btn btn-primary">
+                            <i class="bi bi-search me-2"></i>Buscar Serviços
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Serviços Recomendados -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-lightning me-2"></i>Serviços Recomendados
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-plus-circle display-4 text-primary mb-3"></i>
+                                    <h6>Encontre Novos Serviços</h6>
+                                    <p class="text-muted small">Descubra profissionais qualificados perto de você</p>
+                                    <a href="{{ url_for('servicos.buscar') }}" class="btn btn-primary btn-sm">
+                                        Explorar Serviços
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-chat-quote display-4 text-success mb-3"></i>
+                                    <h6>Suas Conversas</h6>
+                                    <p class="text-muted small">Acompanhe suas conversas com prestadores</p>
+                                    <a href="{{ url_for('chat.index') }}" class="btn btn-success btn-sm">
+                                        Ver Conversas
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-star display-4 text-warning mb-3"></i>
+                                    <h6>Avaliações Pendentes</h6>
+                                    <p class="text-muted small">Avalie serviços que você já utilizou</p>
+
+                                    <!-- CÁLCULO SEGURO DE AVALIAÇÕES PENDENTES -->
+                                    {% set count_avaliacoes_pendentes = 0 %}
+                                    {% for agendamento in agendamentos %}
+                                        {% if agendamento.status == 'realizado' %}
+                                            {% if not agendamento.avaliacao_id %}
+                                                {% set count_avaliacoes_pendentes = count_avaliacoes_pendentes + 1 %}
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    <button class="btn btn-warning btn-sm" onclick="verAvaliacoesPendentes({{ count_avaliacoes_pendentes }})">
+                                        {{ count_avaliacoes_pendentes }} Pendente{{ 's' if count_avaliacoes_pendentes != 1 }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-headset display-4 text-info mb-3"></i>
+                                    <h6>Suporte</h6>
+                                    <p class="text-muted small">Precisa de ajuda? Entre em contato com nosso suporte</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ url_for('tickets.meus_tickets') }}" class="btn btn-info btn-sm">
+                                            Meus Tickets
+                                        </a>
+                                        <a href="{{ url_for('tickets.novo_ticket') }}" class="btn btn-outline-info btn-sm">
+                                            Novo Ticket
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tickets Recentes (se houver) -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-headset me-2"></i>Meus Tickets Recentes
+                    </h5>
+                    <a href="{{ url_for('tickets.meus_tickets') }}" class="btn btn-sm btn-outline-primary">
+                        Ver Todos
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div id="tickets-recentes">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                            <p class="text-muted mt-2">Carregando tickets...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Cancelamento -->
+<div class="modal fade" id="cancelarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cancelar Agendamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="cancelarForm" method="POST">
+                <div class="modal-body">
+                    <p>Tem certeza que deseja cancelar este agendamento?</p>
+                    <div class="mb-3">
+                        <label for="motivoCancelamento" class="form-label">Motivo do cancelamento (opcional):</label>
+                        <textarea class="form-control" id="motivoCancelamento" name="motivo" rows="3"
+                                  placeholder="Informe o motivo do cancelamento..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Manter Agendamento</button>
+                    <button type="submit" class="btn btn-danger">Confirmar Cancelamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Avaliação -->
+<div class="modal fade" id="avaliarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Avaliar Serviço</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="avaliarForm" method="POST">
+                <input type="hidden" id="agendamentoAvaliacaoId" name="agendamento_id">
+                <div class="modal-body">
+                    <div class="text-center mb-4">
+                        <div id="estrelas" class="fs-1">
+                            <i class="bi bi-star" data-rating="1"></i>
+                            <i class="bi bi-star" data-rating="2"></i>
+                            <i class="bi bi-star" data-rating="3"></i>
+                            <i class="bi bi-star" data-rating="4"></i>
+                            <i class="bi bi-star" data-rating="5"></i>
+                        </div>
+                        <input type="hidden" id="ratingValue" name="rating" value="5">
+                    </div>
+                    <div class="mb-3">
+                        <label for="comentarioAvaliacao" class="form-label">Comentário (opcional):</label>
+                        <textarea class="form-control" id="comentarioAvaliacao" name="comentario" rows="3"
+                                  placeholder="Conte como foi sua experiência com o serviço..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="enviarAvaliacao()">
+                        <i class="bi bi-star me-2"></i>Enviar Avaliação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let agendamentoParaCancelar = null;
+let agendamentoParaAvaliar = null;
+
+// ✅ FUNÇÃO enviarAvaliacao DEFINIDA NO INÍCIO (fora do DOMContentLoaded)
+function enviarAvaliacao() {
+    console.log('🎯 Função enviarAvaliacao chamada!');
+
+    const agendamentoId = document.getElementById('agendamentoAvaliacaoId').value;
+    const rating = document.getElementById('ratingValue').value;
+    const comentario = document.getElementById('comentarioAvaliacao').value;
+
+    console.log('📤 Dados da avaliação:', {
+        agendamentoId: agendamentoId,
+        rating: rating,
+        comentario: comentario
+    });
+
+    if (!agendamentoId) {
+        alert('❌ Erro: ID do agendamento não encontrado');
+        return;
+    }
+
+    if (!rating) {
+        alert('⭐ Por favor, selecione uma avaliação com as estrelas.');
+        return;
+    }
+
+    // ✅ ENVIAR VIA FETCH
+    fetch(`/avaliacoes/criar/${agendamentoId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+            'rating': rating,
+            'comentario': comentario || ''
+        })
+    })
+    .then(response => {
+        console.log('📥 Resposta recebida, status:', response.status);
+
+        if (response.redirected) {
+            // Se foi redirecionado, sucesso!
+            bootstrap.Modal.getInstance(document.getElementById('avaliarModal')).hide();
+            alert('✅ Avaliação enviada com sucesso!');
+            window.location.href = response.url;
+        } else if (response.ok) {
+            // Se status OK, processar JSON
+            return response.json().then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('avaliarModal')).hide();
+                    alert('✅ Avaliação enviada com sucesso!');
+                    location.reload();
+                } else {
+                    alert('❌ Erro: ' + (data.error || 'Erro desconhecido'));
+                }
+            });
+        } else {
+            throw new Error('Erro HTTP: ' + response.status);
+        }
+    })
+    .catch(error => {
+        console.error('💥 Erro completo:', error);
+        alert('❌ Erro ao enviar avaliação. Tente novamente.');
+    });
+}
+
+// Ver detalhes do agendamento
+function verDetalhes(agendamentoId) {
+    window.location.href = `/agendamentos/${agendamentoId}`;
+}
+
+// Cancelar agendamento
+function cancelarAgendamento(agendamentoId) {
+    agendamentoParaCancelar = agendamentoId;
+    const form = document.getElementById('cancelarForm');
+    form.action = `/agendamentos/${agendamentoId}/cancelar`;
+
+    const modal = new bootstrap.Modal(document.getElementById('cancelarModal'));
+    modal.show();
+}
+
+// Abrir chat
+function abrirChat(agendamentoId) {
+    window.location.href = `/chat/conversa/${agendamentoId}`;
+}
+
+// Iniciar conversa
+function iniciarConversa(agendamentoId) {
+    console.log(`🔄 Iniciando conversa para agendamento ${agendamentoId}`);
+
+    // Mostrar loading
+    const botao = event.target;
+    const textoOriginal = botao.innerHTML;
+    botao.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+    botao.disabled = true;
+
+    fetch(`/chat/iniciar/${agendamentoId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            console.log('✅ Conversa iniciada com sucesso:', data);
+            window.location.href = `/chat/conversa/${agendamentoId}`;
+        } else {
+            console.error('❌ Erro ao iniciar conversa:', data.error);
+            alert('Erro ao iniciar conversa: ' + data.error);
+            botao.innerHTML = textoOriginal;
+            botao.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('❌ Erro de rede:', error);
+        alert('Erro de conexão ao iniciar conversa. Tente novamente.');
+        botao.innerHTML = textoOriginal;
+        botao.disabled = false;
+    });
+}
+
+// Avaliar serviço
+function avaliarServico(agendamentoId) {
+    agendamentoParaAvaliar = agendamentoId;
+    document.getElementById('agendamentoAvaliacaoId').value = agendamentoId;
+
+    // Resetar estrelas para 5 estrelas por padrão
+    const stars = document.querySelectorAll('#estrelas i');
+    stars.forEach((star, index) => {
+        if (index < 5) {
+            star.className = 'bi bi-star-fill text-warning';
+        }
+    });
+    document.getElementById('ratingValue').value = '5';
+
+    const modal = new bootstrap.Modal(document.getElementById('avaliarModal'));
+    modal.show();
+}
+
+// Ver avaliações pendentes
+function verAvaliacoesPendentes(count) {
+    if (count > 0) {
+        alert(`Você tem ${count} avaliação(ões) pendente(s).`);
+    } else {
+        alert('Nenhuma avaliação pendente no momento.');
+    }
+}
+
+// Sistema de estrelas para avaliação
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('#estrelas i');
+
+    stars.forEach(star => {
+        star.addEventListener('mouseenter', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            highlightStars(rating);
+        });
+
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            document.getElementById('ratingValue').value = rating;
+            // Manter as estrelas selecionadas após o clique
+            highlightStars(rating);
+        });
+
+        star.addEventListener('mouseleave', function() {
+            const currentRating = parseInt(document.getElementById('ratingValue').value);
+            highlightStars(currentRating);
+        });
+    });
+
+    function highlightStars(rating) {
+        stars.forEach(star => {
+            const starRating = parseInt(star.getAttribute('data-rating'));
+            if (starRating <= rating) {
+                star.className = 'bi bi-star-fill text-warning';
+            } else {
+                star.className = 'bi bi-star';
+            }
+        });
+    }
+
+    // Form de cancelamento
+    document.getElementById('cancelarForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+
+        fetch(this.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('cancelarModal')).hide();
+                alert('Agendamento cancelado com sucesso!');
+                location.reload();
+            } else {
+                alert('Erro ao cancelar agendamento');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao cancelar agendamento. Tente novamente.');
+        });
+    });
+
+    // Carregar estatísticas de tickets
+    carregarEstatisticasTickets();
+
+    // Carregar tickets recentes
+    carregarTicketsRecentes();
+});
+
+// Carregar estatísticas de tickets
+function carregarEstatisticasTickets() {
+    fetch('/tickets/api/estatisticas')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('tickets-abertos-count').textContent =
+                    data.estatisticas.tickets_abertos + data.estatisticas.tickets_em_andamento;
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar estatísticas de tickets:', error);
+            document.getElementById('tickets-abertos-count').textContent = '0';
+        });
+}
+
+// Carregar tickets recentes
+function carregarTicketsRecentes() {
+    fetch('/tickets/api/recentes')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('tickets-recentes');
+
+            if (data.success && data.tickets && data.tickets.length > 0) {
+                let html = '';
+
+                data.tickets.forEach(ticket => {
+                    html += `
+                    <div class="card border-0 mb-2 ${ticket.status === 'aberto' ? 'bg-warning bg-opacity-10' :
+                        ticket.status === 'em_andamento' ? 'bg-info bg-opacity-10' :
+                        'bg-light'}">
+                        <div class="card-body py-2">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="fw-bold mb-1">${ticket.assunto}</h6>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                                        <span class="badge ticket-badge ${ticket.status === 'aberto' ? 'bg-warning' :
+                                            ticket.status === 'em_andamento' ? 'bg-info' :
+                                            ticket.status === 'respondido' ? 'bg-primary' :
+                                            'bg-success'}">
+                                            ${ticket.status.replace('_', ' ').toUpperCase()}
+                                        </span>
+                                        <span class="badge ticket-badge bg-secondary">${ticket.categoria.toUpperCase()}</span>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock me-1"></i>
+                                            ${new Date(ticket.data_abertura).toLocaleDateString('pt-BR')}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <a href="/tickets/${ticket.id}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye me-1"></i>Ver Detalhes
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                });
+
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="bi bi-headset display-1 text-muted mb-3"></i>
+                        <h6 class="text-muted">Nenhum ticket encontrado</h6>
+                        <p class="text-muted small mb-3">Você ainda não criou nenhum ticket de suporte</p>
+                        <a href="/tickets/novo" class="btn btn-info btn-sm">
+                            <i class="bi bi-plus-circle me-1"></i>Criar Primeiro Ticket
+                        </a>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar tickets recentes:', error);
+            document.getElementById('tickets-recentes').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Erro ao carregar tickets. Tente recarregar a página.
+                </div>
+            `;
+        });
+}
+
+// Atualização automática do dashboard
+setInterval(() => {
+    console.log('Dashboard atualizado - ' + new Date().toLocaleTimeString());
+    carregarEstatisticasTickets();
+}, 120000);
+</script>
+{% endblock %}

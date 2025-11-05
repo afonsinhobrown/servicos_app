@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Agendar Serviço - {{ servico.titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .service-summary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+    }
+    .datetime-input {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s;
+    }
+    .datetime-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .availability-badge {
+        font-size: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="fw-bold mb-0">
+                            <i class="bi bi-calendar-plus me-2"></i>Agendar Serviço
+                        </h2>
+                        <a href="{{ url_for('servicos.buscar') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Voltar
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <!-- Resumo do Serviço -->
+                    <div class="card service-summary text-white mb-4 border-0">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h4 class="fw-bold mb-2">{{ servico.titulo }}</h4>
+                                    <p class="mb-2 opacity-75">{{ servico.descricao }}</p>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-clock me-1"></i>{{ servico.duracao }}min
+                                        </span>
+                                        <span class="badge bg-light text-dark">
+                                            <i class="bi bi-star me-1"></i>{{ servico.nivel.title() }}
+                                        </span>
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-cash-coin me-1"></i>MZN {{ "%.2f"|format(servico.preco) }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div class="bg-white bg-opacity-20 rounded-circle d-inline-flex align-items-center justify-content-center mb-2"
+                                         style="width: 80px; height: 80px;">
+                                        <i class="bi bi-person-check fs-1"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-0">{{ servico.prestador.usuario.nome }}</h6>
+                                    <small class="opacity-75">{{ servico.prestador.especialidade }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" id="agendamentoForm">
+                        <div class="row g-4">
+                            <!-- Data e Hora -->
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm h-100">
+                                    <div class="card-header bg-light border-0">
+                                        <h6 class="fw-bold mb-0">
+                                            <i class="bi bi-calendar-event me-2"></i>Data e Hora
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="data_agendamento" class="form-label fw-semibold">
+                                                Selecione Data e Hora *
+                                            </label>
+                                            <input type="datetime-local"
+                                                   class="form-control datetime-input"
+                                                   id="data_agendamento"
+                                                   name="data_agendamento"
+                                                   required>
+                                            <div class="form-text">
+                                                Horário de funcionamento: 08:00 - 18:00
+                                            </div>
+                                        </div>
+
+                                        <div id="disponibilidadeInfo" class="alert alert-info d-none">
+                                            <i class="bi bi-info-circle me-2"></i>
+                                            <span id="disponibilidadeText"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Modalidade e Detalhes -->
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm h-100">
+                                    <div class="card-header bg-light border-0">
+                                        <h6 class="fw-bold mb-0">
+                                            <i class="bi bi-geo-alt me-2"></i>Modalidade
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold">Tipo de Atendimento *</label>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="modalidade"
+                                                       id="presencial" value="presencial" checked>
+                                                <label class="form-check-label" for="presencial">
+                                                    <i class="bi bi-geo-alt me-1"></i>Presencial
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="modalidade"
+                                                       id="online" value="online">
+                                                <label class="form-check-label" for="online">
+                                                    <i class="bi bi-camera-video me-1"></i>Online
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div id="enderecoField" class="mb-3">
+                                            <label for="endereco_servico" class="form-label fw-semibold">
+                                                Endereço para o Serviço *
+                                            </label>
+                                            <textarea class="form-control" id="endereco_servico"
+                                                      name="endereco_servico" rows="3"
+                                                      placeholder="Informe o endereço completo..."></textarea>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label for="observacoes" class="form-label fw-semibold">
+                                                Observações
+                                            </label>
+                                            <textarea class="form-control" id="observacoes"
+                                                      name="observacoes" rows="3"
+                                                      placeholder="Alguma informação adicional ou requisito especial..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resumo e Confirmação -->
+                        <div class="card border-0 shadow-sm mt-4">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h6 class="fw-bold mb-2">Resumo do Agendamento</h6>
+                                        <div class="row text-muted small">
+                                            <div class="col-6">
+                                                <strong>Serviço:</strong> {{ servico.titulo }}
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>Duração:</strong> {{ servico.duracao }}min
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>Prestador:</strong> {{ servico.prestador.usuario.nome }}
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>Valor:</strong> MZN {{ "%.2f"|format(servico.preco) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-center">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100" id="btnAgendar">
+                                            <i class="bi bi-check-circle me-2"></i>
+                                            Confirmar Agendamento
+                                        </button>
+                                        <small class="text-muted d-block mt-2">
+                                            <i class="bi bi-shield-check me-1"></i>
+                                            Cancelamento gratuito até 24h antes
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modalidadePresencial = document.getElementById('presencial');
+    const modalidadeOnline = document.getElementById('online');
+    const enderecoField = document.getElementById('enderecoField');
+    const dataInput = document.getElementById('data_agendamento');
+    const disponibilidadeInfo = document.getElementById('disponibilidadeInfo');
+    const disponibilidadeText = document.getElementById('disponibilidadeText');
+
+    // Definir data mínima como hoje (client-side)
+    const now = new Date();
+    const minDate = now.toISOString().slice(0, 16);
+    dataInput.min = minDate;
+
+    // Mostrar/ocultar campo de endereço baseado na modalidade
+    function toggleEnderecoField() {
+        if (modalidadePresencial.checked) {
+            enderecoField.style.display = 'block';
+            enderecoField.querySelector('textarea').required = true;
+        } else {
+            enderecoField.style.display = 'none';
+            enderecoField.querySelector('textarea').required = false;
+        }
+    }
+
+    modalidadePresencial.addEventListener('change', toggleEnderecoField);
+    modalidadeOnline.addEventListener('change', toggleEnderecoField);
+    toggleEnderecoField(); // Initial state
+
+    // Verificar disponibilidade quando a data muda
+    dataInput.addEventListener('change', function() {
+        const selectedDate = this.value;
+        if (!selectedDate) return;
+
+        // Simular verificação de disponibilidade
+        const selectedDateTime = new Date(selectedDate);
+        const now = new Date();
+
+        if (selectedDateTime < now) {
+            showDisponibilidade('error', 'Não é possível agendar para datas passadas.');
+            return;
+        }
+
+        // Verificar se está dentro do horário comercial (8h-18h)
+        const hour = selectedDateTime.getHours();
+        if (hour < 8 || hour >= 18) {
+            showDisponibilidade('warning', 'Fora do horário comercial (08:00 - 18:00).');
+            return;
+        }
+
+        showDisponibilidade('success', 'Horário disponível para agendamento!');
+    });
+
+    function showDisponibilidade(type, message) {
+        disponibilidadeInfo.className = `alert alert-${type} d-block`;
+        disponibilidadeText.textContent = message;
+    }
+
+    // Form submission
+    document.getElementById('agendamentoForm').addEventListener('submit', function(e) {
+        const btnAgendar = document.getElementById('btnAgendar');
+        btnAgendar.disabled = true;
+        btnAgendar.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i> Processando...';
+    });
+});
+</script>
+{% endblock %}

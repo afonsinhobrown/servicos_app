@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Tickets de Suporte{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ticket-card {
+        border-left: 4px solid;
+        transition: transform 0.2s;
+    }
+    .ticket-card:hover {
+        transform: translateY(-2px);
+    }
+    .ticket-prioridade-alta { border-left-color: #dc3545; }
+    .ticket-prioridade-media { border-left-color: #ffc107; }
+    .ticket-prioridade-baixa { border-left-color: #28a745; }
+    .ticket-prioridade-urgente { border-left-color: #dc3545; background-color: #ffe6e6; }
+    .ticket-status-aberto { background-color: #e3f2fd; }
+    .ticket-status-em_andamento { background-color: #fff3cd; }
+    .ticket-status-respondido { background-color: #d1ecf1; }
+    .ticket-status-fechado { background-color: #d4edda; }
+    .badge-prioridade { font-size: 0.7rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row align-items-center mb-4">
+        <div class="col">
+            <h1 class="h2 fw-bold">
+                <i class="bi bi-headset me-2"></i>Tickets de Suporte
+            </h1>
+            <p class="text-muted mb-0">Gerencie todos os tickets de suporte da plataforma</p>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <a href="{{ url_for('admin_tickets.lista_tickets') }}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Atualizar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card border-0 bg-primary text-white">
+                <div class="card-body text-center py-3">
+                    <h4 class="fw-bold mb-1">{{ estatisticas.total }}</h4>
+                    <small>Total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 bg-warning text-dark">
+                <div class="card-body text-center py-3">
+                    <h4 class="fw-bold mb-1">{{ estatisticas.abertos }}</h4>
+                    <small>Abertos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 bg-info text-white">
+                <div class="card-body text-center py-3">
+                    <h4 class="fw-bold mb-1">{{ estatisticas.em_andamento }}</h4>
+                    <small>Em Andamento</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 bg-success text-white">
+                <div class="card-body text-center py-3">
+                    <h4 class="fw-bold mb-1">{{ estatisticas.respondidos }}</h4>
+                    <small>Respondidos</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 bg-secondary text-white">
+                <div class="card-body text-center py-3">
+                    <h4 class="fw-bold mb-1">{{ estatisticas.fechados }}</h4>
+                    <small>Fechados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-0 bg-danger text-white">
+                <div class="card-body text-center py-3">
+                    <h4 class="fw-bold mb-1" id="tickets-urgentes">0</h4>
+                    <small>Urgentes</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="todos" {% if filtros.status == 'todos' %}selected{% endif %}>Todos os Status</option>
+                        <option value="aberto" {% if filtros.status == 'aberto' %}selected{% endif %}>Abertos</option>
+                        <option value="em_andamento" {% if filtros.status == 'em_andamento' %}selected{% endif %}>Em Andamento</option>
+                        <option value="respondido" {% if filtros.status == 'respondido' %}selected{% endif %}>Respondidos</option>
+                        <option value="fechado" {% if filtros.status == 'fechado' %}selected{% endif %}>Fechados</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Prioridade</label>
+                    <select name="prioridade" class="form-select" onchange="this.form.submit()">
+                        <option value="todos" {% if filtros.prioridade == 'todos' %}selected{% endif %}>Todas as Prioridades</option>
+                        <option value="urgente" {% if filtros.prioridade == 'urgente' %}selected{% endif %}>Urgente</option>
+                        <option value="alta" {% if filtros.prioridade == 'alta' %}selected{% endif %}>Alta</option>
+                        <option value="media" {% if filtros.prioridade == 'media' %}selected{% endif %}>Média</option>
+                        <option value="baixa" {% if filtros.prioridade == 'baixa' %}selected{% endif %}>Baixa</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Categoria</label>
+                    <select name="categoria" class="form-select" onchange="this.form.submit()">
+                        <option value="todos" {% if filtros.categoria == 'todos' %}selected{% endif %}>Todas as Categorias</option>
+                        <option value="tecnico" {% if filtros.categoria == 'tecnico' %}selected{% endif %}>Técnico</option>
+                        <option value="financeiro" {% if filtros.categoria == 'financeiro' %}selected{% endif %}>Financeiro</option>
+                        <option value="conta" {% if filtros.categoria == 'conta' %}selected{% endif %}>Conta</option>
+                        <option value="agendamento" {% if filtros.categoria == 'agendamento' %}selected{% endif %}>Agendamento</option>
+                        <option value="outro" {% if filtros.categoria == 'outro' %}selected{% endif %}>Outro</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <a href="{{ url_for('admin_tickets.lista_tickets') }}" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-x-circle me-2"></i>Limpar Filtros
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Lista de Tickets -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 py-3">
+            <h5 class="fw-bold mb-0">
+                <i class="bi bi-list me-2"></i>Tickets ({{ tickets|length }})
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if tickets %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Assunto</th>
+                            <th>Usuário</th>
+                            <th>Categoria</th>
+                            <th>Prioridade</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
+                        <tr class="ticket-status-{{ ticket.status }}">
+                            <td>
+                                <strong>#{{ ticket.id }}</strong>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_tickets.detalhes_ticket', ticket_id=ticket.id) }}" 
+                                   class="text-decoration-none text-dark fw-bold">
+                                    {{ ticket.assunto }}
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ ticket.descricao[:80] }}{% if ticket.descricao|length > 80 %}...{% endif %}</small>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 35px; height: 35px;">
+                                        <i class="bi bi-person text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <strong class="d-block">{{ ticket.usuario.nome }}</strong>
+                                        <small class="text-muted">{{ ticket.usuario.tipo.title() }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ ticket.categoria.title() }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-prioridade 
+                                    {% if ticket.prioridade == 'urgente' %}bg-danger
+                                    {% elif ticket.prioridade == 'alta' %}bg-warning
+                                    {% elif ticket.prioridade == 'media' %}bg-info
+                                    {% else %}bg-success{% endif %}"
+                                    onclick="alterarPrioridade({{ ticket.id }}, this)">
+                                    {{ ticket.prioridade.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if ticket.status == 'aberto' %}bg-warning
+                                    {% elif ticket.status == 'em_andamento' %}bg-info
+                                    {% elif ticket.status == 'respondido' %}bg-primary
+                                    {% elif ticket.status == 'fechado' %}bg-success{% endif %}">
+                                    {{ ticket.status.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ ticket.data_abertura.strftime('%d/%m/%Y') }}<br>
+                                    {{ ticket.data_abertura.strftime('%H:%M') }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('admin_tickets.detalhes_ticket', ticket_id=ticket.id) }}" 
+                                       class="btn btn-outline-primary btn-sm" title="Ver detalhes">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if ticket.status != 'fechado' %}
+                                    <form method="POST" action="{{ url_for('admin_tickets.fechar_ticket', ticket_id=ticket.id) }}" 
+                                          class="d-inline">
+                                        <button type="submit" class="btn btn-outline-success btn-sm"
+                                                onclick="return confirm('Fechar este ticket?')" title="Fechar">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+                <h4 class="text-muted">Nenhum ticket encontrado</h4>
+                <p class="text-muted mb-4">
+                    {% if filtros.status != 'todos' or filtros.prioridade != 'todos' or filtros.categoria != 'todos' %}
+                    Tente alterar os filtros para ver mais tickets
+                    {% else %}
+                    Não há tickets de suporte no momento
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('admin_tickets.lista_tickets') }}" class="btn btn-primary">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Recarregar
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Carregar estatísticas adicionais
+fetch('{{ url_for("admin_tickets.estatisticas_tickets") }}')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('tickets-urgentes').textContent = data.estatisticas.tickets_urgentes;
+        }
+    })
+    .catch(error => console.error('Erro ao carregar estatísticas:', error));
+
+// Alterar prioridade
+function alterarPrioridade(ticketId, element) {
+    const prioridades = ['baixa', 'media', 'alta', 'urgente'];
+    const currentPriority = element.textContent.trim().toLowerCase();
+    const currentIndex = prioridades.indexOf(currentPriority);
+    const nextIndex = (currentIndex + 1) % prioridades.length;
+    const novaPrioridade = prioridades[nextIndex];
+    
+    fetch(`/admin/tickets/${ticketId}/prioridade`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            prioridade: novaPrioridade
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Atualizar visual
+            const classes = {
+                'baixa': 'bg-success',
+                'media': 'bg-info', 
+                'alta': 'bg-warning',
+                'urgente': 'bg-danger'
+            };
+            
+            element.className = `badge badge-prioridade ${classes[novaPrioridade]}`;
+            element.textContent = novaPrioridade.charAt(0).toUpperCase() + novaPrioridade.slice(1);
+        }
+    })
+    .catch(error => console.error('Erro ao alterar prioridade:', error));
+}
+</script>
+{% endblock %}

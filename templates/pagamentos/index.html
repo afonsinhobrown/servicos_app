@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Pagamentos - ServiçosPro{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h4 class="fw-bold mb-0">
+                        <i class="bi bi-credit-card me-2"></i>Meus Pagamentos
+                    </h4>
+                </div>
+                <div class="card-body p-0">
+                    {% if pagamentos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Serviço</th>
+                                    <th>Valor</th>
+                                    <th>Taxa</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pagamento in pagamentos %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ pagamento.agendamento.servico.titulo }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            {% if current_user.tipo == 'cliente' %}
+                                            Para: {{ pagamento.agendamento.prestador.usuario.nome }}
+                                            {% else %}
+                                            De: {{ pagamento.agendamento.cliente.nome }}
+                                            {% endif %}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">MZN {{ "%.2f"|format(pagamento.valor_total) }}</strong>
+                                        {% if pagamento.valor_prestador %}
+                                        <br>
+                                        <small class="text-muted">Líquido: MZN {{ "%.2f"|format(pagamento.valor_prestador) }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ pagamento.taxa_plataforma }}%</span>
+                                        <br>
+                                        <small class="text-muted">MZN {{ "%.2f"|format((pagamento.valor_total * pagamento.taxa_plataforma / 100)) }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if pagamento.status == 'pago' %}bg-success
+                                            {% elif pagamento.status == 'pendente' %}bg-warning
+                                            {% elif pagamento.status == 'falhado' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ pagamento.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if pagamento.data_pagamento %}
+                                        {{ pagamento.data_pagamento.strftime('%d/%m/%Y') }}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if pagamento.status == 'pendente' and current_user.tipo == 'cliente' %}
+                                        <a href="{{ url_for('pagamentos.pagamento_agendamento', agendamento_id=pagamento.agendamento_id) }}" 
+                                           class="btn btn-primary btn-sm">
+                                            Pagar
+                                        </a>
+                                        {% endif %}
+                                        <button class="btn btn-outline-secondary btn-sm" 
+                                                onclick="verDetalhes({{ pagamento.id }})">
+                                            Detalhes
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-credit-card display-1 text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhum pagamento</h5>
+                        <p class="text-muted">
+                            {% if current_user.tipo == 'cliente' %}
+                            Seus pagamentos aparecerão aqui quando você agendar serviços.
+                            {% else %}
+                            Seus ganhos aparecerão aqui quando clientes pagarem seus serviços.
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

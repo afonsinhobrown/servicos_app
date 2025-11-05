@@ -1,0 +1,112 @@
+{% if notificacoes %}
+    {% for notificacao in notificacoes[:5] %}  <!-- Mostra apenas as 5 mais recentes no dropdown -->
+    <li class="px-3 py-2 notificacao-dropdown-item {% if not notificacao.lida %}bg-light{% endif %}"
+        style="border-bottom: 1px solid #f0f0f0; cursor: pointer;"
+        onclick="marcarComoLida({{ notificacao.id }}, '{{ notificacao.link_acao or '' }}')"
+        data-link="{{ notificacao.link_acao or '' }}"
+        title="Clique para marcar como lida">
+        <div class="d-flex align-items-start">
+            <div class="flex-shrink-0 me-2">
+                <i class="bi
+                    {% if notificacao.tipo == 'agendamento' %}bi-calendar-check text-primary
+                    {% elif notificacao.tipo == 'mensagem' %}bi-chat text-info
+                    {% elif notificacao.tipo == 'pagamento' %}bi-credit-card text-success
+                    {% elif notificacao.tipo == 'avaliacao' %}bi-star text-warning
+                    {% elif notificacao.tipo == 'ticket' %}bi-headset text-danger
+                    {% else %}bi-info-circle text-secondary{% endif %}"
+                    style="font-size: 1rem;">
+                </i>
+            </div>
+            <div class="flex-grow-1" style="min-width: 0;">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <h6 class="mb-0 text-truncate fw-semibold {% if not notificacao.lida %}text-dark{% else %}text-muted{% endif %}"
+                        style="font-size: 0.85rem; max-width: 180px;">
+                        {{ notificacao.titulo }}
+                    </h6>
+                    {% if not notificacao.lida %}
+                    <span class="badge bg-danger badge-dot" title="Não lida"></span>
+                    {% endif %}
+                </div>
+                <p class="mb-1 text-truncate {% if not notificacao.lida %}text-dark{% else %}text-muted{% endif %}"
+                   style="font-size: 0.8rem; max-width: 200px;"
+                   title="{{ notificacao.mensagem }}">
+                    {{ notificacao.mensagem }}
+                </p>
+                <small class="text-muted" style="font-size: 0.75rem;">
+                    <i class="bi bi-clock me-1"></i>{{ notificacao.data_criacao.strftime('%H:%M') }}
+                </small>
+            </div>
+        </div>
+    </li>
+    {% endfor %}
+
+    <!-- Footer do dropdown -->
+    <li><hr class="dropdown-divider m-0"></li>
+    <li>
+        <div class="d-flex justify-content-between align-items-center px-3 py-2">
+            <a class="small text-primary text-decoration-none" href="{{ url_for('notificacoes.listar') }}">
+                <i class="bi bi-list-ul me-1"></i>Ver todas
+            </a>
+            {% if notificacoes|selectattr('lida', 'equalto', false)|list|length > 0 %}
+            <form method="POST" action="{{ url_for('notificacoes.marcar_todas_lidas') }}" class="m-0">
+                <button type="submit" class="btn btn-sm btn-outline-secondary py-0"
+                        onclick="event.stopPropagation(); return confirm('Marcar todas como lidas?')">
+                    <small>Limpar todas</small>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </li>
+{% else %}
+    <li class="px-3 py-4 text-center">
+        <i class="bi bi-bell-slash text-muted mb-2 d-block" style="font-size: 1.5rem;"></i>
+        <small class="text-muted d-block">Nenhuma notificação</small>
+        <small class="text-muted">Você está em dia!</small>
+    </li>
+    <li><hr class="dropdown-divider m-0"></li>
+    <li>
+        <a class="dropdown-item text-center text-primary" href="{{ url_for('notificacoes.listar') }}">
+            <i class="bi bi-list-ul me-1"></i>Ver histórico
+        </a>
+    </li>
+{% endif %}
+
+<style>
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border-radius: 50%;
+    display: inline-block;
+}
+.notificacao-dropdown-item {
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    margin: 2px;
+}
+.notificacao-dropdown-item:hover {
+    background-color: #f8f9fa !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+</style>
+
+<script>
+// Adicionar tooltips para melhor experiência
+document.addEventListener('DOMContentLoaded', function() {
+    // Tooltip para o badge de não lida
+    const badges = document.querySelectorAll('.badge-dot');
+    badges.forEach(badge => {
+        badge.setAttribute('data-bs-toggle', 'tooltip');
+        badge.setAttribute('title', 'Não lida');
+    });
+
+    // Inicializar tooltips do Bootstrap
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+});
+</script>

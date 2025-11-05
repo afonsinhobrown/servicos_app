@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Ticket - ServiçosPro{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h4 class="fw-bold mb-0">
+                        <i class="bi bi-plus-circle me-2"></i>Novo Ticket de Suporte
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="assunto" class="form-label fw-bold">Assunto *</label>
+                            <input type="text" class="form-control" id="assunto" name="assunto" 
+                                   placeholder="Descreva brevemente o problema" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="categoria" class="form-label fw-bold">Categoria *</label>
+                            <select class="form-select" id="categoria" name="categoria" required>
+                                <option value="">Selecione uma categoria</option>
+                                <option value="tecnico">Problema Técnico</option>
+                                <option value="financeiro">Assunto Financeiro</option>
+                                <option value="conta">Problema com Conta</option>
+                                <option value="agendamento">Dúvida sobre Agendamentos</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="prioridade" class="form-label fw-bold">Prioridade *</label>
+                            <select class="form-select" id="prioridade" name="prioridade" required>
+                                <option value="baixa">Baixa</option>
+                                <option value="media" selected>Média</option>
+                                <option value="alta">Alta</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="descricao" class="form-label fw-bold">Descrição Detalhada *</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="8" 
+                                      placeholder="Descreva seu problema ou dúvida em detalhes. Inclua informações como:
+- O que estava tentando fazer?
+- Quando o problema ocorreu?
+- Que mensagens de erro apareceram?
+- Passos para reproduzir o problema" required></textarea>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-info-circle me-2"></i>Antes de enviar:
+                            </h6>
+                            <ul class="mb-0">
+                                <li>Descreva o problema com o máximo de detalhes possível</li>
+                                <li>Inclua prints se necessário (você poderá anexar depois)</li>
+                                <li>Nossa equipe responderá em até 24 horas</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('tickets.meus_tickets') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-2"></i>Enviar Ticket
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

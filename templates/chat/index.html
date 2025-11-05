@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Conversas - ServiçosPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .conversa-item {
+        transition: all 0.3s;
+        border-left: 4px solid transparent;
+    }
+    .conversa-item:hover {
+        background-color: #f8f9fa;
+        border-left-color: #007bff;
+        transform: translateX(5px);
+    }
+    .conversa-item.unread {
+        background-color: #e7f3ff;
+        border-left-color: #007bff;
+    }
+    .last-message {
+        font-size: 0.875rem;
+        color: #6c757d;
+        line-height: 1.4;
+    }
+    .unread-count {
+        background-color: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    .service-badge {
+        font-size: 0.75rem;
+        background-color: #e9ecef;
+        color: #495057;
+    }
+    .time-stamp {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="fw-bold mb-0">
+                                <i class="bi bi-chat-left-text me-2 text-primary"></i>Minhas Conversas
+                            </h4>
+                            <p class="text-muted mb-0 small">
+                                {% if current_user.tipo == 'cliente' %}
+                                Conversas com prestadores de serviço
+                                {% else %}
+                                Conversas com seus clientes
+                                {% endif %}
+                            </p>
+                        </div>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Voltar ao Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    {% if conversas %}
+                    <div class="list-group list-group-flush">
+                        {% for item in conversas %}
+                        <a href="{{ url_for('chat.conversa', agendamento_id=item.agendamento.id) }}"
+                           class="list-group-item list-group-item-action conversa-item {% if item.mensagens_nao_lidas > 0 %}unread{% endif %} py-3">
+                            <div class="row align-items-center">
+                                <!-- Avatar -->
+                                <div class="col-auto">
+                                    <div class="user-avatar">
+                                        {{ item.outro_nome[0].upper() }}
+                                    </div>
+                                </div>
+
+                                <!-- Conteúdo -->
+                                <div class="col">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <div>
+                                            <h6 class="fw-bold mb-0">{{ item.outro_nome }}</h6>
+                                            <span class="badge service-badge">
+                                                {{ item.servico.titulo }}
+                                            </span>
+                                        </div>
+                                        <div class="text-end">
+                                            {% if item.mensagens_nao_lidas > 0 %}
+                                            <span class="unread-count">{{ item.mensagens_nao_lidas }}</span>
+                                            {% endif %}
+                                            <div class="time-stamp mt-1">
+                                                {% if item.ultima_mensagem %}
+                                                {{ item.ultima_mensagem.data_envio.strftime('%d/%m %H:%M') }}
+                                                {% else %}
+                                                {{ item.conversa.data_criacao.strftime('%d/%m %H:%M') }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Última mensagem -->
+                                    <p class="last-message mb-0">
+                                        {% if item.ultima_mensagem %}
+                                            {% if item.ultima_mensagem.remetente_id == current_user.id %}
+                                            <strong class="text-primary">Você:</strong>
+                                            {% endif %}
+                                            {{ item.ultima_mensagem.conteudo[:60] }}
+                                            {% if item.ultima_mensagem.conteudo|length > 60 %}...{% endif %}
+                                        {% else %}
+                                            <em class="text-muted">Nenhuma mensagem ainda</em>
+                                        {% endif %}
+                                    </p>
+
+                                    <!-- Informações do serviço -->
+                                    <div class="mt-2">
+                                        <span class="badge
+                                            {% if item.agendamento.status == 'confirmado' %}bg-success
+                                            {% elif item.agendamento.status == 'pendente' %}bg-warning
+                                            {% elif item.agendamento.status == 'realizado' %}bg-primary
+                                            {% elif item.agendamento.status == 'cancelado' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ item.agendamento.status.title() }}
+                                        </span>
+                                        <small class="text-muted ms-2">
+                                            <i class="bi bi-calendar-event me-1"></i>
+                                            {{ item.agendamento.data_agendamento.strftime('%d/%m/%Y') }}
+                                        </small>
+                                        <small class="text-muted ms-2">
+                                            <i class="bi bi-{% if item.agendamento.modalidade == 'online' %}laptop{% else %}geo-alt{% endif %} me-1"></i>
+                                            {{ item.agendamento.modalidade.title() }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <!-- Estado vazio -->
+                    <div class="text-center py-5">
+                        <i class="bi bi-chat-left-text display-1 text-muted mb-3"></i>
+                        <h5 class="text-muted">Nenhuma conversa encontrada</h5>
+                        <p class="text-muted mb-4">
+                            {% if current_user.tipo == 'cliente' %}
+                            Suas conversas com prestadores aparecerão aqui quando você iniciar conversas sobre agendamentos.
+                            {% else %}
+                            Suas conversas com clientes aparecerão aqui quando receber mensagens sobre agendamentos.
+                            {% endif %}
+                        </p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-house me-2"></i>Ir para Dashboard
+                            </a>
+                            {% if current_user.tipo == 'cliente' %}
+                            <a href="{{ url_for('servicos.buscar') }}" class="btn btn-primary">
+                                <i class="bi bi-search me-2"></i>Buscar Serviços
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Rodapé com estatísticas -->
+                {% if conversas %}
+                <div class="card-footer bg-light border-0 py-2">
+                    <div class="row text-center">
+                        <div class="col">
+                            <small class="text-muted">
+                                <strong>{{ conversas|length }}</strong> conversa{{ 's' if conversas|length != 1 }}
+                            </small>
+                        </div>
+                        <div class="col">
+                            {% set total_nao_lidas = conversas|sum(attribute='mensagens_nao_lidas') %}
+                            <small class="text-muted">
+                                <strong>{{ total_nao_lidas }}</strong> mensagem{{ 's' if total_nao_lidas != 1 }} não lida{{ 's' if total_nao_lidas != 1 }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📋 Conversas carregadas: {{ conversas|length }}');
+
+    // Atualização automática a cada 30 segundos
+    setInterval(() => {
+        console.log('🔄 Atualizando conversas...');
+        // Você pode implementar atualização via AJAX aqui
+    }, 30000);
+});
+</script>
+{% endblock %}

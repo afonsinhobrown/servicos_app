@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Meus Tickets - ServiçosPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ticket-card {
+        border-left: 4px solid;
+        transition: transform 0.2s;
+    }
+    .ticket-card:hover {
+        transform: translateY(-2px);
+    }
+    .ticket-prioridade-alta { border-left-color: #dc3545; }
+    .ticket-prioridade-media { border-left-color: #ffc107; }
+    .ticket-prioridade-baixa { border-left-color: #28a745; }
+    .ticket-status-aberto { background-color: #e3f2fd; }
+    .ticket-status-em_andamento { background-color: #fff3cd; }
+    .ticket-status-respondido { background-color: #d1ecf1; }
+    .ticket-status-fechado { background-color: #d4edda; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 fw-bold">
+                    <i class="bi bi-headset me-2"></i>Meus Tickets de Suporte
+                </h1>
+                <a href="{{ url_for('tickets.novo_ticket') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Novo Ticket
+                </a>
+            </div>
+
+            <!-- Estatísticas Rápidas -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 bg-primary text-white">
+                        <div class="card-body text-center py-3">
+                            <h4 class="fw-bold mb-1" id="total-tickets">0</h4>
+                            <small>Total de Tickets</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 bg-warning text-dark">
+                        <div class="card-body text-center py-3">
+                            <h4 class="fw-bold mb-1" id="tickets-abertos">0</h4>
+                            <small>Abertos</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 bg-info text-white">
+                        <div class="card-body text-center py-3">
+                            <h4 class="fw-bold mb-1" id="tickets-andamento">0</h4>
+                            <small>Em Andamento</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 bg-success text-white">
+                        <div class="card-body text-center py-3">
+                            <h4 class="fw-bold mb-1" id="tickets-resolvidos">0</h4>
+                            <small>Resolvidos</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Tickets -->
+            {% if tickets %}
+            <div class="row">
+                {% for ticket in tickets %}
+                <div class="col-12 mb-3">
+                    <div class="card ticket-card shadow-sm ticket-prioridade-{{ ticket.prioridade }} ticket-status-{{ ticket.status }}">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="fw-bold mb-1">
+                                        <a href="{{ url_for('tickets.detalhes_ticket', ticket_id=ticket.id) }}" 
+                                           class="text-decoration-none text-dark">
+                                            {{ ticket.assunto }}
+                                        </a>
+                                    </h5>
+                                    <p class="text-muted mb-2">
+                                        {{ ticket.descricao[:150] }}{% if ticket.descricao|length > 150 %}...{% endif %}
+                                    </p>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <span class="badge 
+                                            {% if ticket.status == 'aberto' %}bg-warning
+                                            {% elif ticket.status == 'em_andamento' %}bg-info
+                                            {% elif ticket.status == 'respondido' %}bg-primary
+                                            {% elif ticket.status == 'fechado' %}bg-success{% endif %}">
+                                            {{ ticket.status.replace('_', ' ').title() }}
+                                        </span>
+                                        <span class="badge 
+                                            {% if ticket.prioridade == 'alta' %}bg-danger
+                                            {% elif ticket.prioridade == 'media' %}bg-warning
+                                            {% else %}bg-success{% endif %}">
+                                            {{ ticket.prioridade.title() }}
+                                        </span>
+                                        <span class="badge bg-secondary">{{ ticket.categoria.title() }}</span>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock me-1"></i>
+                                            {{ ticket.data_abertura.strftime('%d/%m/%Y %H:%M') }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <div class="btn-group">
+                                        <a href="{{ url_for('tickets.detalhes_ticket', ticket_id=ticket.id) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-eye me-1"></i>Ver
+                                        </a>
+                                        {% if ticket.status != 'fechado' %}
+                                        <form method="POST" action="{{ url_for('tickets.fechar_ticket', ticket_id=ticket.id) }}" 
+                                              class="d-inline">
+                                            <button type="submit" class="btn btn-outline-success btn-sm"
+                                                    onclick="return confirm('Fechar este ticket?')">
+                                                <i class="bi bi-check-lg me-1"></i>Fechar
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-headset display-1 text-muted mb-3"></i>
+                <h4 class="text-muted mb-3">Nenhum ticket encontrado</h4>
+                <p class="text-muted mb-4">Crie seu primeiro ticket de suporte para obter ajuda</p>
+                <a href="{{ url_for('tickets.novo_ticket') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle me-2"></i>Criar Primeiro Ticket
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Carregar estatísticas
+fetch('{{ url_for("tickets.estatisticas_tickets") }}')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('total-tickets').textContent = data.estatisticas.total_tickets;
+            document.getElementById('tickets-abertos').textContent = data.estatisticas.tickets_abertos;
+            document.getElementById('tickets-andamento').textContent = data.estatisticas.tickets_em_andamento;
+            document.getElementById('tickets-resolvidos').textContent = data.estatisticas.tickets_resolvidos;
+        }
+    })
+    .catch(error => console.error('Erro ao carregar estatísticas:', error));
+</script>
+{% endblock %}

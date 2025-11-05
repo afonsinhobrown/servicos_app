@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}{{ prestador.usuario.nome }} - ServiçosPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .service-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+
+    .service-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border: 3px solid white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Profile Hero - MANTIDO SEU ESTILO -->
+<section class="profile-hero text-white py-5">
+    <div class="container py-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center mb-3">
+                    <img src="{{ prestador.usuario.foto_url or url_for('static', filename='images/default-avatar.png') }}"
+                         alt="{{ prestador.usuario.nome }}"
+                         class="profile-avatar rounded-circle me-4">
+                    <div>
+                        <h1 class="display-5 fw-bold mb-2">{{ prestador.usuario.nome }}</h1>
+                        <p class="lead mb-3">
+                            <i class="bi bi-award me-2"></i>{{ prestador.especialidade }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-3 align-items-center">
+                    <span class="badge bg-light text-dark fs-6">
+                        <i class="bi bi-star-fill me-1 text-warning"></i>
+                        {{ "%.1f"|format(prestador.avaliacao_media|default(0)) }}/5
+                    </span>
+                    {% if prestador.verificado %}
+                    <span class="badge bg-success fs-6">
+                        <i class="bi bi-check-circle me-1"></i>Verificado
+                    </span>
+                    {% endif %}
+                    <span class="badge bg-info fs-6">
+                        <i class="bi bi-clock me-1"></i>Disponível
+                    </span>
+                    <span class="badge bg-secondary fs-6">
+                        <i class="bi bi-briefcase me-1"></i>{{ prestador.experiencia or 0 }} anos
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('agendamentos.agendar') }}?prestador={{ prestador.id }}"
+                   class="btn btn-light btn-lg px-4">
+                    <i class="bi bi-calendar-plus me-2"></i>Agendar Serviço
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Profile Content - MANTENDO SUA ESTRUTURA -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar - MESMO LAYOUT DO SEU -->
+            <div class="col-lg-4 mb-4">
+                <!-- Stats Card -->
+                <div class="card service-card mb-4">
+                    <div class="card-body text-center p-4">
+                        <div class="row g-3">
+                            <div class="col-4">
+                                <div class="fs-2 fw-bold text-primary">{{ stats.total_servicos|default(0) }}</div>
+                                <small class="text-muted">Serviços</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-2 fw-bold text-success">{{ stats.clientes_atendidos|default(0) }}</div>
+                                <small class="text-muted">Clientes</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-2 fw-bold text-info">{{ prestador.experiencia or 0 }}</div>
+                                <small class="text-muted">Anos Exp.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="card service-card mb-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-telephone me-2"></i>Contacto
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="bi bi-envelope text-primary me-2"></i>
+                            <span>{{ prestador.usuario.email }}</span>
+                        </div>
+                        {% if prestador.usuario.telefone %}
+                        <div class="mb-3">
+                            <i class="bi bi-phone text-primary me-2"></i>
+                            <span>{{ prestador.usuario.telefone }}</span>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <i class="bi bi-geo-alt text-primary me-2"></i>
+                            <span>{{ prestador.usuario.cidade or "Maputo" }}, Moçambique</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing -->
+                <div class="card service-card">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-currency-dollar me-2"></i>Preços
+                        </h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="h3 fw-bold text-primary mb-2">
+                            MZN {{ "%.0f"|format(prestador.valor_hora|default(0)) }}
+                        </div>
+                        <small class="text-muted d-block mb-3">por hora</small>
+                        <a href="{{ url_for('agendamentos.agendar') }}?prestador={{ prestador.id }}"
+                           class="btn btn-primary w-100">
+                            <i class="bi bi-calendar-check me-2"></i>Solicitar Orçamento
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content - MESMO LAYOUT -->
+            <div class="col-lg-8">
+                <!-- Sobre -->
+                <div class="card service-card mb-4">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-3">
+                            <i class="bi bi-person me-2"></i>Sobre o Profissional
+                        </h4>
+                        <p class="text-muted mb-4">
+                            {{ prestador.descricao or "Profissional dedicado e qualificado, comprometido em oferecer os melhores serviços com excelência e atenção aos detalhes." }}
+                        </p>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <h6 class="fw-semibold mb-2">
+                                    <i class="bi bi-award text-primary me-2"></i>Especialidade
+                                </h6>
+                                <p class="text-muted">{{ prestador.especialidade }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-semibold mb-2">
+                                    <i class="bi bi-briefcase text-primary me-2"></i>Experiência
+                                </h6>
+                                <p class="text-muted">{{ prestador.experiencia or 0 }} anos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Serviços - MESMA ESTRUTURA -->
+                <div class="card service-card">
+                    <div class="card-body p-4">
+                        <h4 class="fw-bold mb-3">
+                            <i class="bi bi-briefcase me-2"></i>Serviços Oferecidos
+                        </h4>
+
+                        {% if servicos %}
+                        <div class="row g-3">
+                            {% for servico in servicos %}
+                            <div class="col-12">
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h5 class="fw-bold mb-2">{{ servico.titulo }}</h5>
+                                                <p class="text-muted mb-3">{{ servico.descricao }}</p>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    <span class="badge bg-primary">
+                                                        {{ servico.nivel.title() }}
+                                                    </span>
+                                                    <span class="badge bg-secondary">
+                                                        {{ servico.duracao }} minutos
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="col-auto text-end">
+                                                <div class="h4 fw-bold text-primary mb-2">
+                                                    MZN {{ "%.0f"|format(servico.preco) }}
+                                                </div>
+                                                <a href="{{ url_for('agendamentos.agendar', servico_id=servico.id) }}"
+                                                   class="btn btn-outline-primary">
+                                                    Agendar
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-briefcase display-1 text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhum serviço cadastrado</h5>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

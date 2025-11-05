@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Detalhes do Ticket #{{ ticket.id }}</h2>
+                <a href="{{ url_for('tickets.meus_tickets') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+            </div>
+
+            <!-- DEBUG INFO -->
+            <div class="alert alert-info">
+                <h6>Informações de Debug:</h6>
+                <p><strong>Ticket ID:</strong> {{ ticket.id }}</p>
+                <p><strong>Total de Respostas:</strong> {{ respostas|length }}</p>
+                <p><strong>Status do Ticket:</strong> {{ ticket.status }}</p>
+            </div>
+
+            <!-- Informações do Ticket -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">{{ ticket.assunto }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Categoria:</strong> {{ ticket.categoria }}<br>
+                            <strong>Data de Abertura:</strong> {{ ticket.data_abertura.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Status:</strong>
+                            <span class="badge bg-{{ 'success' if ticket.status == 'respondido' else 'warning' if ticket.status == 'em_andamento' else 'info' if ticket.status == 'aberto' else 'secondary' }}">
+                                {{ ticket.status }}
+                            </span><br>
+                            <strong>Prioridade:</strong>
+                            <span class="badge bg-{{ 'danger' if ticket.prioridade == 'urgente' else 'warning' if ticket.prioridade == 'alta' else 'info' }}">
+                                {{ ticket.prioridade }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <strong>Sua Descrição:</strong>
+                        <p class="mt-2">{{ ticket.descricao }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Histórico de Conversa -->
+
+            <!-- Histórico de Conversa -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Histórico da Conversa</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Mensagem Inicial do Usuário -->
+                    <div class="card mb-3 border-primary">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <strong>
+                                    <i class="bi bi-person-circle text-primary"></i>
+                                    {{ ticket.usuario.nome }}
+                                </strong>
+                                <small class="text-muted">
+                                    {{ ticket.data_abertura.strftime('%d/%m/%Y %H:%M') }}
+                                </small>
+                            </div>
+                            <p class="mb-0">{{ ticket.descricao }}</p>
+                            <small class="text-muted mt-2">Mensagem inicial do ticket</small>
+                        </div>
+                    </div>
+
+                    <!-- Respostas -->
+                    {% if respostas %}
+                    {% for resposta in respostas %}
+                    <div class="card mb-3 {% if resposta.usuario_id == 15 %}border-warning bg-light{% else %}border-primary{% endif %}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <strong>
+                                    {% if resposta.usuario_id == 15 %}
+                                    <i class="bi bi-shield-check text-warning"></i>
+                                    <span class="text-warning">Suporte Técnico</span>
+                                    {% else %}
+                                    <i class="bi bi-person-circle text-primary"></i>
+                                    Você
+                                    {% endif %}
+                                </strong>
+                                <small class="text-muted">
+                                    {{ resposta.data_resposta.strftime('%d/%m/%Y %H:%M') }}
+                                </small>
+                            </div>
+                            <p class="mb-0">{{ resposta.resposta }}</p>
+                            {% if resposta.usuario_id == 15 %}
+                            <small class="text-muted mt-2">
+                                <i class="bi bi-patch-check-fill text-success"></i> Resposta oficial do suporte
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="alert alert-info">
+                        <p class="mb-0">
+                            <i class="bi bi-info-circle"></i>
+                            A equipa de suporte ainda não respondeu ao seu ticket.
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Formulário de Resposta -->
+            {% if ticket.status != 'fechado' and ticket.status != 'respondido' %}
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Adicionar Comentário</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('tickets.responder_ticket', ticket_id=ticket.id) }}">
+                        <div class="mb-3">
+                            <label for="resposta" class="form-label">Sua Mensagem</label>
+                            <textarea name="resposta" id="resposta" class="form-control" rows="4"
+                                      placeholder="Escreva sua mensagem aqui..." required></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Enviar Mensagem
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+servicos_pro/
+│
+├── app.py
+├── requirements.txt
+│
+├── models/
+│   ├── __init__.py
+│   ├── usuario.py
+│   ├── prestador.py
+│   ├── servico.py
+│   └── agendamento.py
+│
+├── routes/
+│   ├── __init__.py
+│   ├── auth.py
+│   ├── servicos.py
+│   └── prestadores.py
+│
+└── templates/
+    ├── base.html
+    ├── auth/
+    ├── servicos/
+    └── prestadores/
+
+CREATE DATABASE plataforma_servicos;
+CREATE USER 'plataforma'@'localhost' IDENTIFIED BY 'plataforma123';
+GRANT ALL PRIVILEGES ON plataforma_servicos.* TO 'plataforma'@'localhost';
+FLUSH PRIVILEGES;

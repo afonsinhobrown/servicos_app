@@ -1,0 +1,260 @@
+<header class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <div class="container">
+        <!-- Logo -->
+        <a class="navbar-brand fw-bold text-primary d-flex align-items-center" href="{{ url_for('main.index') }}">
+            <i class="bi bi-briefcase me-2 fs-4"></i>
+            ServiçosPro
+        </a>
+
+        <!-- Mobile Toggle -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navigation -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('servicos.buscar') }}">
+                        <i class="bi bi-search me-1"></i>Encontrar Serviços
+                    </a>
+                </li>
+                {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.dashboard') }}">
+                        <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+
+            <ul class="navbar-nav">
+                {% if current_user.is_authenticated %}
+                    <!-- Menu Admin -->
+                    {% if current_user.tipo == 'admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-warning fw-bold" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-shield-lock me-1"></i>Admin
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard Admin
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_tickets.lista_tickets') }}">
+                                <i class="bi bi-headset me-2"></i>Tickets de Suporte
+                                <span class="badge bg-danger ms-1" id="navbar-tickets-count">0</span>
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.criar_usuario') }}">
+                                <i class="bi bi-person-plus me-2"></i>Criar Usuário
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="bi bi-people me-2"></i>Gerenciar Usuários
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="bi bi-briefcase me-2"></i>Gerenciar Prestadores
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    <!-- Notificações -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" role="button"
+                           data-bs-toggle="dropdown" id="notificacoesDropdown" aria-expanded="false">
+                            <i class="bi bi-bell fs-6"></i>
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                  id="notificacoes-count" style="display: none; font-size: 0.6rem;">
+                                0
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" id="notificacoes-list"
+                            style="min-width: 320px; max-height: 400px; overflow-y: auto;">
+                            <li><h6 class="dropdown-header">Notificações Recentes</h6></li>
+                            <li class="px-3 py-3 text-center">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Carregando...</span>
+                                </div>
+                                <small class="text-muted ms-2">Carregando notificações...</small>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- User Menu -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
+                            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2"
+                                 style="width: 32px; height: 32px;">
+                                <i class="bi bi-person text-primary"></i>
+                            </div>
+                            <span class="d-none d-md-inline">{{ current_user.nome.split(' ')[0] }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">{{ current_user.nome }}</h6></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.dashboard') }}">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a></li>
+
+                            {% if current_user.tipo == 'admin' %}
+                            <!-- Menu específico para ADMIN -->
+                            <li><a class="dropdown-item" href="{{ url_for('admin.meu_perfil') }}">
+                                <i class="bi bi-person-gear me-2"></i>Meu Perfil
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.alterar_senha') }}">
+                                <i class="bi bi-shield-lock me-2"></i>Alterar Senha
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.dashboard') }}">
+                                <i class="bi bi-graph-up me-2"></i>Dashboard Admin
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin.criar_usuario') }}">
+                                <i class="bi bi-person-plus me-2"></i>Criar Usuário
+                            </a></li>
+                            {% else %}
+                            <!-- Menu para usuários normais -->
+                            <li><a class="dropdown-item" href="#">
+                                <i class="bi bi-person me-2"></i>Meu Perfil
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="bi bi-shield-lock me-2"></i>Alterar Senha
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('tickets.meus_tickets') }}">
+                                <i class="bi bi-headset me-2"></i>Meus Tickets
+                            </a></li>
+                            {% endif %}
+
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                <i class="bi bi-box-arrow-right me-2"></i>Sair
+                            </a></li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <!-- Guest Menu -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Entrar</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-primary ms-2" href="{{ url_for('auth.registro') }}">Cadastrar</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</header>
+
+<script>
+// Sistema de Notificações
+function carregarNotificacoes() {
+    console.log('Carregando notificações...');
+
+    fetch('/notificacoes/?ajax=1')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro na resposta do servidor: ' + response.status);
+            }
+            return response.text();
+        })
+        .then(html => {
+            const lista = document.getElementById('notificacoes-list');
+            if (lista) {
+                lista.innerHTML = html;
+                console.log('Notificações carregadas com sucesso');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar notificações:', error);
+            const lista = document.getElementById('notificacoes-list');
+            if (lista) {
+                lista.innerHTML = `
+                    <li><h6 class="dropdown-header">Notificações</h6></li>
+                    <li class="px-3 py-3 text-center">
+                        <i class="bi bi-exclamation-triangle text-warning mb-2 d-block"></i>
+                        <small class="text-muted">Erro ao carregar notificações</small>
+                    </li>
+                `;
+            }
+        });
+}
+
+function atualizarContadorNotificacoes() {
+    fetch('/notificacoes/api/nao-lidas')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao buscar contador');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const badge = document.getElementById('notificacoes-count');
+            if (badge && data.nao_lidas !== undefined) {
+                badge.textContent = data.nao_lidas;
+                badge.style.display = data.nao_lidas > 0 ? 'inline' : 'none';
+                console.log('Contador atualizado:', data.nao_lidas);
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao atualizar contador:', error);
+            const badge = document.getElementById('notificacoes-count');
+            if (badge) {
+                badge.style.display = 'none';
+            }
+        });
+}
+
+// Carregar notificações quando o dropdown for aberto
+document.addEventListener('DOMContentLoaded', function() {
+    const notificacoesDropdown = document.getElementById('notificacoesDropdown');
+    if (notificacoesDropdown) {
+        notificacoesDropdown.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Dropdown de notificações clicado');
+            carregarNotificacoes();
+        });
+    }
+
+    // Atualizar contador a cada 30 segundos
+    setInterval(atualizarContadorNotificacoes, 30000);
+
+    // Carregar contador inicial
+    atualizarContadorNotificacoes();
+    console.log('Sistema de notificações inicializado');
+});
+
+// Função para marcar notificação como lida
+function marcarComoLida(notificacaoId, linkAcao = null) {
+    console.log('Marcando notificação como lida:', notificacaoId);
+
+    fetch(`/notificacoes/${notificacaoId}/ler`)
+        .then(response => {
+            if (linkAcao && linkAcao !== 'None') {
+                console.log('Redirecionando para:', linkAcao);
+                window.location.href = linkAcao;
+            } else {
+                // Recarregar apenas se não houver redirecionamento
+                console.log('Recarregando notificações...');
+                carregarNotificacoes();
+                atualizarContadorNotificacoes();
+            }
+        })
+        .catch(error => console.error('Erro ao marcar como lida:', error));
+}
+
+// Atualizar contador de tickets para admin
+document.addEventListener('DOMContentLoaded', function() {
+    {% if current_user.is_authenticated and current_user.tipo == 'admin' %}
+    fetch('/admin/api/estatisticas')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const ticketsCount = data.estatisticas.tickets_abertos + data.estatisticas.tickets_urgentes;
+                const badge = document.getElementById('navbar-tickets-count');
+                if (badge && ticketsCount > 0) {
+                    badge.textContent = ticketsCount;
+                }
+            }
+        })
+        .catch(error => console.error('Erro ao carregar estatísticas:', error));
+    {% endif %}
+});
+</script>

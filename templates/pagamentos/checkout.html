@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - {{ agendamento.servico.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-3">
+                    <h4 class="fw-bold mb-0 text-center">
+                        <i class="bi bi-credit-card me-2"></i>Finalizar Pagamento
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Resumo do Serviço -->
+                    <div class="card bg-light border-0 mb-4">
+                        <div class="card-body">
+                            <h6 class="fw-bold">Resumo do Serviço</h6>
+                            <div class="row">
+                                <div class="col-8">
+                                    <strong>{{ agendamento.servico.titulo }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        Prestador: {{ agendamento.prestador.usuario.nome }}
+                                    </small>
+                                    <br>
+                                    <small class="text-muted">
+                                        Data: {{ agendamento.data_agendamento.strftime('%d/%m/%Y %H:%M') }}
+                                    </small>
+                                </div>
+                                <div class="col-4 text-end">
+                                    <strong class="text-success">MZN {{ "%.2f"|format(agendamento.servico.preco) }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalhes do Pagamento -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Detalhes do Pagamento</h6>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Valor do serviço:</span>
+                            <span>MZN {{ "%.2f"|format(pagamento.valor_total) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Taxa da plataforma ({{ pagamento.taxa_plataforma }}%):</span>
+                            <span class="text-danger">- MZN {{ "%.2f"|format((pagamento.valor_total * pagamento.taxa_plataforma / 100)) }}</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between fw-bold fs-5">
+                            <span>Total:</span>
+                            <span class="text-success">MZN {{ "%.2f"|format(pagamento.valor_total) }}</span>
+                        </div>
+                        {% if current_user.tipo == 'prestador' %}
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>Valor líquido para você:</span>
+                            <span>MZN {{ "%.2f"|format(pagamento.valor_prestador) }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Métodos de Pagamento -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Método de Pagamento</h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="metodoPagamento" id="stripe" value="stripe" checked>
+                            <label class="form-check-label" for="stripe">
+                                <i class="bi bi-credit-card me-2"></i>Cartão de Crédito/Débito
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="metodoPagamento" id="paypal" value="paypal">
+                            <label class="form-check-label" for="paypal">
+                                <i class="bi bi-paypal me-2"></i>PayPal
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="metodoPagamento" id="transferencia" value="transferencia">
+                            <label class="form-check-label" for="transferencia">
+                                <i class="bi bi-bank me-2"></i>Transferência Bancária
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Botão de Pagamento -->
+                    <div class="d-grid">
+                        <button class="btn btn-primary btn-lg" onclick="processarPagamento()" id="btnPagar">
+                            <i class="bi bi-lock me-2"></i>
+                            Pagar MZN {{ "%.2f"|format(pagamento.valor_total) }}
+                        </button>
+                    </div>
+
+                    <!-- Informações de Segurança -->
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Pagamento 100% seguro e criptografado
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function processarPagamento() {
+    const btnPagar = document.getElementById('btnPagar');
+    const metodoSelecionado = document.querySelector('input[name="metodoPagamento"]:checked').value;
+    
+    // Desabilitar botão
+    btnPagar.disabled = true;
+    btnPagar.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i> Processando pagamento...';
+    
+    fetch('/pagamentos/api/processar-pagamento', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            pagamento_id: {{ pagamento.id }},
+            metodo_pagamento: metodoSelecionado
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Sucesso - redirecionar para confirmação
+            window.location.href = '{{ url_for("main.dashboard") }}?pagamento=sucesso';
+        } else {
+            alert('Erro no pagamento: ' + data.error);
+            btnPagar.disabled = false;
+            btnPagar.innerHTML = '<i class="bi bi-lock me-2"></i> Pagar MZN {{ "%.2f"|format(pagamento.valor_total) }}';
+        }
+    })
+    .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao processar pagamento');
+        btnPagar.disabled = false;
+        btnPagar.innerHTML = '<i class="bi bi-lock me-2"></i> Pagar MZN {{ "%.2f"|format(pagamento.valor_total) }}';
+    });
+}
+</script>
+{% endblock %}

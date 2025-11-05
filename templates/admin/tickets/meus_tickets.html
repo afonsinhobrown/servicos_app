@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Meus Tickets de Suporte</h2>
+                <a href="{{ url_for('tickets.novo_ticket') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Novo Ticket
+                </a>
+            </div>
+
+            {% if tickets %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Assunto</th>
+                                    <th>Status</th>
+                                    <th>Prioridade</th>
+                                    <th>Data de Abertura</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ticket in tickets %}
+                                <tr>
+                                    <td>{{ ticket.assunto }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if ticket.status == 'respondido' else 'warning' if ticket.status == 'em_andamento' else 'secondary' }}">
+                                            {{ ticket.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if ticket.prioridade == 'urgente' else 'warning' if ticket.prioridade == 'alta' else 'info' }}">
+                                            {{ ticket.prioridade }}
+                                        </span>
+                                    </td>
+                                    <td>{{ ticket.data_abertura.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    <td>
+                                        <a href="{{ url_for('tickets.detalhes_ticket', ticket_id=ticket.id) }}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            Ver
+                                        </a>
+                                        {% if ticket.status != 'fechado' %}
+                                        <form method="POST" action="{{ url_for('tickets.fechar_ticket', ticket_id=ticket.id) }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                                Fechar
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <p class="mb-0">Você ainda não abriu nenhum ticket de suporte.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

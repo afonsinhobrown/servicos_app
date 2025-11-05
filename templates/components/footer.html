@@ -1,0 +1,152 @@
+<footer class="bg-dark text-white mt-auto">
+    <div class="container py-5">
+        <div class="row g-4">
+            <!-- Logo e Descrição -->
+            <div class="col-lg-4">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="bi bi-handshake fs-3 text-primary me-2"></i>
+                    <span class="h4 fw-bold text-white mb-0">ServiçosPro</span>
+                </div>
+                <p class="text-light mb-4">
+                    A maior plataforma de serviços de Moçambique, conectando profissionais qualificados 
+                    com clientes que precisam de soluções confiáveis e eficientes.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="#" class="text-light fs-5 transition-hover">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                    <a href="#" class="text-light fs-5 transition-hover">
+                        <i class="bi bi-instagram"></i>
+                    </a>
+                    <a href="#" class="text-light fs-5 transition-hover">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                    <a href="#" class="text-light fs-5 transition-hover">
+                        <i class="bi bi-twitter"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Links Rápidos -->
+            <div class="col-lg-2 col-md-4">
+                <h6 class="fw-semibold mb-3 text-primary">Serviços</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="{{ url_for('servicos.buscar') }}" class="text-light text-decoration-none transition-hover">
+                            Buscar Profissionais
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{{ url_for('auth.registro') }}" class="text-light text-decoration-none transition-hover">
+                            Tornar-se Prestador
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-light text-decoration-none transition-hover">
+                            Categorias
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-light text-decoration-none transition-hover">
+                            Serviços em Destaque
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Suporte -->
+            <div class="col-lg-2 col-md-4">
+                <h6 class="fw-semibold mb-3 text-primary">Suporte</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="{{ url_for('admin_tickets.lista_tickets') if current_user.tipo == 'admin' else '#' }}"
+                           class="text-light text-decoration-none transition-hover">
+                            {% if current_user.tipo == 'admin' %}Gestão de Tickets{% else %}Centro de Ajuda{% endif %}
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#"
+                           class="text-light text-decoration-none transition-hover">
+                            Contacte-nos
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-light text-decoration-none transition-hover">
+                            FAQs
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-light text-decoration-none transition-hover">
+                            Tutoriais
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Legal -->
+            <div class="col-lg-2 col-md-4">
+                <h6 class="fw-semibold mb-3 text-primary">Legal</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="#" class="text-light text-decoration-none transition-hover">
+                            Termos de Serviço
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-light text-decoration-none transition-hover">
+                            Política de Privacidade
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-light text-decoration-none transition-hover">
+                            Cookies
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="#" class="text-light text-decoration-none transition-hover">
+                            LGPD
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Contacto -->
+            <div class="col-lg-2">
+                <h6 class="fw-semibold mb-3 text-primary">Contacto</h6>
+                <ul class="list-unstyled text-light">
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-envelope me-2 text-primary mt-1"></i>
+                        <span>suporte@servicospro.mz</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-telephone me-2 text-primary mt-1"></i>
+                        <span>+258 84 123 4567</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-whatsapp me-2 text-primary mt-1"></i>
+                        <span>+258 84 123 4567</span>
+                    </li>
+                    <li class="mb-3 d-flex align-items-start">
+                        <i class="bi bi-geo-alt me-2 text-primary mt-1"></i>
+                        <span>Maputo, Moçambique</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <hr class="my-4 border-secondary">
+
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="text-light mb-0">
+                    &copy; {{ now.year if now is defined else '2025' }} ServiçosPro. Todos os direitos reservados.
+                </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="text-light mb-0">
+                    Desenvolvido com <i class="bi bi-heart-fill text-danger"></i> para Moçambique
+                </p>
+            </div>
+        </div>
+    </div>
+</footer>

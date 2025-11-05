@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Minhas Notificações - ServiçosPro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notificacao-nao-lida {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+    }
+    .notificacao-lida {
+        background-color: #ffffff;
+        border-left: 4px solid #6c757d;
+    }
+    .notificacao-item {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+    }
+    .notificacao-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .badge-tipo {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 py-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="fw-bold mb-1">
+                                <i class="bi bi-bell me-2"></i>Minhas Notificações
+                            </h4>
+                            <p class="text-muted mb-0">
+                                {% if total > 0 %}
+                                    Mostrando {{ notificacoes|length }} de {{ total }} notificação{{ 'es' if total > 1 else '' }}
+                                {% else %}
+                                    Nenhuma notificação
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="d-flex gap-2">
+                            {% if total > 0 %}
+                            <form method="POST" action="{{ url_for('notificacoes.marcar_todas_lidas') }}" class="d-inline">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="bi bi-check-all me-1"></i>Marcar Todas como Lidas
+                                </button>
+                            </form>
+                            {% endif %}
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Voltar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    {% if notificacoes %}
+                    <div class="list-group list-group-flush">
+                        {% for notificacao in notificacoes %}
+                        <div class="list-group-item border-0 p-4 notificacao-item {% if not notificacao.lida %}notificacao-nao-lida{% else %}notificacao-lida{% endif %}">
+                            <div class="row align-items-center">
+                                <div class="col-md-1 text-center">
+                                    <div class="mb-2">
+                                        <i class="bi 
+                                            {% if notificacao.tipo == 'agendamento' %}bi-calendar-check 
+                                            {% elif notificacao.tipo == 'mensagem' %}bi-chat 
+                                            {% elif notificacao.tipo == 'pagamento' %}bi-credit-card 
+                                            {% elif notificacao.tipo == 'avaliacao' %}bi-star 
+                                            {% else %}bi-info-circle{% endif %} 
+                                            fs-3 {% if not notificacao.lida %}text-primary{% else %}text-muted{% endif %}">
+                                        </i>
+                                    </div>
+                                    <span class="badge {% if not notificacao.lida %}bg-primary{% else %}bg-secondary{% endif %} badge-tipo">
+                                        {{ notificacao.tipo.title() }}
+                                    </span>
+                                </div>
+                                
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="fw-bold mb-2 {% if not notificacao.lida %}text-dark{% else %}text-muted{% endif %}">
+                                                {{ notificacao.titulo }}
+                                                {% if not notificacao.lida %}
+                                                <span class="badge bg-warning ms-2">Nova</span>
+                                                {% endif %}
+                                            </h6>
+                                            <p class="mb-2 {% if not notificacao.lida %}text-dark{% else %}text-muted{% endif %}">
+                                                {{ notificacao.mensagem }}
+                                            </p>
+                                            <div class="d-flex align-items-center text-muted small">
+                                                <i class="bi bi-clock me-1"></i>
+                                                <span>{{ notificacao.data_criacao.strftime('%d/%m/%Y às %H:%M') }}</span>
+                                                {% if notificacao.lida and notificacao.lida_em %}
+                                                <span class="ms-3">
+                                                    <i class="bi bi-check-circle me-1"></i>
+                                                    Lida em {{ notificacao.lida_em.strftime('%d/%m/%Y às %H:%M') }}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-3 text-end">
+                                    <div class="btn-group-vertical btn-group-sm">
+                                        {% if notificacao.link_acao %}
+                                        <a href="{{ url_for('notificacoes.ler', notificacao_id=notificacao.id) }}" 
+                                           class="btn btn-outline-primary mb-2">
+                                            <i class="bi bi-eye me-1"></i>Ver Detalhes
+                                        </a>
+                                        {% endif %}
+                                        
+                                        <form method="POST" action="{{ url_for('notificacoes.excluir', notificacao_id=notificacao.id) }}" 
+                                              class="d-inline">
+                                            <button type="submit" class="btn btn-outline-danger w-100" 
+                                                    onclick="return confirm('Tem certeza que deseja excluir esta notificação?')">
+                                                <i class="bi bi-trash me-1"></i>Excluir
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-bell-slash display-1 text-muted mb-3"></i>
+                        <h5 class="text-muted mb-3">Nenhuma notificação</h5>
+                        <p class="text-muted mb-4">Suas notificações aparecerão aqui quando houver novas atividades.</p>
+                        <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                            <i class="bi bi-house me-2"></i>Ir para o Dashboard
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Paginação -->
+                {% if total_paginas > 1 %}
+                <div class="card-footer bg-white border-0 py-4">
+                    <nav aria-label="Paginação de notificações">
+                        <ul class="pagination justify-content-center mb-0">
+                            <li class="page-item {% if pagina == 1 %}disabled{% endif %}">
+                                <a class="page-link" 
+                                   href="?pagina={{ pagina - 1 }}" 
+                                   {% if pagina == 1 %}tabindex="-1" aria-disabled="true"{% endif %}>
+                                    <i class="bi bi-chevron-left"></i> Anterior
+                                </a>
+                            </li>
+                            
+                            {% for page_num in range(1, total_paginas + 1) %}
+                                {% if page_num >= pagina - 2 and page_num <= pagina + 2 %}
+                                <li class="page-item {% if page_num == pagina %}active{% endif %}">
+                                    <a class="page-link" href="?pagina={{ page_num }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            <li class="page-item {% if pagina == total_paginas %}disabled{% endif %}">
+                                <a class="page-link" 
+                                   href="?pagina={{ pagina + 1 }}"
+                                   {% if pagina == total_paginas %}tabindex="-1" aria-disabled="true"{% endif %}>
+                                    Próxima <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            Página {{ pagina }} de {{ total_paginas }} • 
+                            Total de {{ total }} notificação{{ 'es' if total > 1 else '' }}
+                        </small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-marcar como lida ao passar o mouse (opcional)
+    const notificacoesNaoLidas = document.querySelectorAll('.notificacao-nao-lida');
+    
+    notificacoesNaoLidas.forEach(notificacao => {
+        notificacao.addEventListener('mouseenter', function() {
+            // Opcional: implementar marcação automática via AJAX
+            // const notificacaoId = this.dataset.id;
+            // fetch(`/notificacoes/${notificacaoId}/ler`, { method: 'GET' });
+        });
+    });
+
+    // Confirmação para excluir todas (se implementar no futuro)
+    const formMarcarTodas = document.querySelector('form[action*="marcar-todas-lidas"]');
+    if (formMarcarTodas) {
+        formMarcarTodas.addEventListener('submit', function(e) {
+            if (!confirm('Deseja marcar todas as notificações como lidas?')) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
