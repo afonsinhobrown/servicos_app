@@ -35,8 +35,8 @@ def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = config.SECRET_KEY
 
-    # Criar tabelas
-    Base.metadata.create_all(bind=engine)
+    # ✅ CORRIGIDO: Criar tabelas apenas se não existirem
+    Base.metadata.create_all(bind=engine, checkfirst=True)
 
     # Login Manager
     login_manager = LoginManager()

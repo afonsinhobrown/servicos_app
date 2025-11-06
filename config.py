@@ -8,8 +8,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'servicos_pro_chave_dev_2024'
 
     # Banco de Dados
-    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:STAE2019@localhost/plataforma_servicos"
-
+    SQLALCHEMY_DATABASE_URL = "sqlite:///servicos_app.db"
     # Configurações do Flask
     DEBUG = True
 
@@ -29,8 +28,7 @@ class Config:
 class DevelopmentConfig(Config):
     """Configurações para desenvolvimento"""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:STAE2019@localhost/plataforma_servicos"
-
+    SQLALCHEMY_DATABASE_URL = "sqlite:///servicos_app.db"
 
 class ProductionConfig(Config):
     """Configurações para produção"""
